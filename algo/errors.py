@@ -1,0 +1,2 @@
+class YouAreDumbException(Exception):
+    pass
