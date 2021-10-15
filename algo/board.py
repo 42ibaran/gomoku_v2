@@ -1,4 +1,5 @@
 import numpy as np
+from hashlib import sha1
 from algo.move import Move
 from algo.constants import EMPTY
 from algo.errors import YouAreDumbException
@@ -24,17 +25,24 @@ class Board():
                         capture_directions.append((i, j))
         return capture_directions
 
+    def get_hash(self):
+        # self.matrix.flags.writeable = False
+        hash_value = sha1(self.matrix)
+        # self.matrix.flags.writeable = True
+        return hash_value.hexdigest()
+
     def dump(self):
         print(np.array2string(self.matrix, max_line_width=np.inf))
 
-    def record_new_move(self, move: Move):
+    def record_new_move(self, move: Move) -> int:
         if self.matrix[move.position] != EMPTY:
             raise YouAreDumbException("The cell is already taken you dum-dum.")
         self.matrix[move.position] = move.color
         self.move_history.append(move)
-        self.record_captures(move)
+        captures_count = self.record_captures(move)
+        return captures_count
 
-    def record_captures(self, move: Move):
+    def record_captures(self, move: Move) -> int:
         capture_directions = self.__find_captures(move)
         y, x = move.position
         for i, j in capture_directions:
@@ -42,6 +50,7 @@ class Board():
             self.matrix[x + 2*i][y + 2*j] = EMPTY
             self.move_history.append(Move(EMPTY, (x + i, y + j)))
             self.move_history.append(Move(EMPTY, (x + 2*i, y + 2*j)))
+        return len(capture_directions)
 
     def undo_move(self):
         last_move = next((i for i in reversed(self.move_history) if i.color != EMPTY), None)

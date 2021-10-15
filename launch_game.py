@@ -24,8 +24,7 @@ def get_human_move():
 
 def play_in_terminal():
     game = Game()
-    count = 0
-    while True:
+    # while True:
         # game.board.dump()
         # move_string = input("Where would you like to play?\n")
         # if move_string == "undo":
@@ -42,11 +41,11 @@ def play_in_terminal():
         #     next_move = Move(BLACK, move_string)
         #     game.record_new_move(next_move)
 
-        # game.board.dump()
-        # move_human = get_human_move()
-        # game.record_new_move(move_human)
-        # move_maximilian = Maximilian.get_next_move(game.board, move_human)
-        # game.record_new_move(move_maximilian)
+    game.board.dump()
+    move_human = get_human_move()
+    game.record_new_move(move_human)
+    move_maximilian = Maximilian.get_next_move(game.board, move_human, game.captures)
+    game.record_new_move(move_maximilian)
 
 if __name__ == "__main__":
     arguments = parse_arguments()
