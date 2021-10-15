@@ -6,6 +6,13 @@ from algo.errors import YouAreDumbException
 
 # TODO add row and column indices to dump 
 
+directions = [
+    [(-1, -1), (1,  1)], # ↖
+    [(-1,  0), (1,  0)], # ↑
+    [(-1,  1), (1, -1)], # ↗️
+    [( 0,  1), (0, -1)]  # ➡️
+]
+
 class Board():
     def __init__(self):
         self.matrix = np.zeros((19, 19), dtype=int)
@@ -16,12 +23,12 @@ class Board():
         y, x = move.position
         for i in range(-1, 2):
             for j in range(-1, 2):
-                if (x + 3*i < 0 or y + 3*j < 0) or \
-                    (x + 3*i >= 18 or y + 3*j >= 18): 
+                if (y + 3*i < 0 or x + 3*j < 0) or \
+                    (y + 3*i >= 18 or x + 3*j >= 18): 
                     continue
-                if self.matrix[x + i][y + j] == move.get_opposite_color() and \
-                   self.matrix[x + 2*i][y + 2*j] == move.get_opposite_color() and \
-                   self.matrix[x + 3*i][y + 3*j] == move.color:
+                if self.matrix[y + i][x + j] == move.get_opposite_color() and \
+                   self.matrix[y + 2*i][x + 2*j] == move.get_opposite_color() and \
+                   self.matrix[y + 3*i][x + 3*j] == move.color:
                         capture_directions.append((i, j))
         return capture_directions
 
@@ -46,10 +53,10 @@ class Board():
         capture_directions = self.__find_captures(move)
         y, x = move.position
         for i, j in capture_directions:
-            self.matrix[x + i][y + j] = EMPTY
-            self.matrix[x + 2*i][y + 2*j] = EMPTY
-            self.move_history.append(Move(EMPTY, (x + i, y + j)))
-            self.move_history.append(Move(EMPTY, (x + 2*i, y + 2*j)))
+            self.matrix[y + i][x + j] = EMPTY
+            self.matrix[y + 2*i][x + 2*j] = EMPTY
+            self.move_history.append(Move(EMPTY, (y + i, x + j)))
+            self.move_history.append(Move(EMPTY, (y + 2*i, x + 2*j)))
         return len(capture_directions)
 
     def undo_move(self):
@@ -75,3 +82,27 @@ class Board():
                     if self.matrix[i + i_delta, j + j_delta] == EMPTY:
                         possible_moves.add((i + i_delta, j + j_delta))
         return list(map(lambda possible_move: Move(color, possible_move), possible_moves))
+
+    def get_list_of_patterns(self, move: Move) -> list:
+        y, x = move.position
+
+        horizontal_axe = self.matrix[y,:]
+        vertical_axe = self.matrix[:,x]
+        main_diagonal = self.matrix.diagonal(x - y)
+        secondary_diagonal = np.fliplr(self.matrix).diagonal(18 - x - y)
+
+        index_horizontal = x
+        index_vertical = y
+        index_main = min(x, y)
+        index_secondary = min(18 - x, y)
+
+
+        # print(offset_main_diagonal)
+        # print(main_diagonal)
+        # print(offset_secondary_diagonal)
+        # print(secondary_diagonal)
+        # exit()
+        # np.diagonal(self.matrix)
+        # for direction in directions:
+
+

@@ -15,7 +15,7 @@ class MinMaxNode():
         self.captures = captures
 
         if remaining_depth == 0:
-            # self.evaluate()
+            self.evaluate()
             return
 
         self.children = []
@@ -37,8 +37,9 @@ class MinMaxNode():
             self.board.undo_move()
 
     def evaluate(self):
-        self.board.dump()
-        print(self.move.position)
+        self.board.get_list_of_patterns(self.move)
+        # self.board.dump()
+        # print(self.move.position)
 
 
 def retrieve_node_from_hashtable(board: Board, captures: dict, color: int) -> (Union[MinMaxNode, None], str):
