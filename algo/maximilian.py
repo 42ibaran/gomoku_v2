@@ -25,7 +25,7 @@ class MinMaxNode():
             child_captures = self.captures.copy()
             child_captures[possible_move.color] += captures_count
 
-            child, hash_value = retrieve_node_from_hashtable(self.board, child_captures)
+            child, hash_value = retrieve_node_from_hashtable(self.board, child_captures, possible_move.color)
             if child is not None:
                 self.children.append(child)
             else:
@@ -41,9 +41,9 @@ class MinMaxNode():
         print(self.move.position)
 
 
-def retrieve_node_from_hashtable(board: Board, captures: dict) -> (Union[MinMaxNode, None], str):
-    hash_value = board.get_hash()
-    hash_value = hash_value + '-' + str(captures[WHITE]) + '-' + str(captures[BLACK])
+def retrieve_node_from_hashtable(board: Board, captures: dict, color: int) -> (Union[MinMaxNode, None], str):
+    hash_value = board.get_hash(color)
+    hash_value = hash_value + '-' + str(captures[color]) + '-' + str(captures[-color])
     if hash_value in hash_dictionary.keys():
         return hash_dictionary[hash_value], hash_value
     return None, hash_value
@@ -53,7 +53,7 @@ class Maximilian():
     @staticmethod
     def get_next_move(board: Board, last_move: Move, captures: dict) -> Move:
         a = time.time()
-        root, hash_value = retrieve_node_from_hashtable(board, captures.copy())
+        root, hash_value = retrieve_node_from_hashtable(board, captures.copy(), last_move.color)
         if root is None:
             root = MinMaxNode(board, last_move, captures.copy())
             hash_dictionary[hash_value] = root

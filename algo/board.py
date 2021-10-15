@@ -25,9 +25,9 @@ class Board():
                         capture_directions.append((i, j))
         return capture_directions
 
-    def get_hash(self):
+    def get_hash(self, color: int) -> str:
         # self.matrix.flags.writeable = False
-        hash_value = sha1(self.matrix)
+        hash_value = sha1(self.matrix * color)
         # self.matrix.flags.writeable = True
         return hash_value.hexdigest()
 
