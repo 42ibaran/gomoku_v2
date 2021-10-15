@@ -34,7 +34,7 @@ class Board():
 
     def get_hash(self, color: int) -> str:
         # self.matrix.flags.writeable = False
-        hash_value = sha1(self.matrix * color)
+        hash_value = sha1(self.matrix)
         # self.matrix.flags.writeable = True
         return hash_value.hexdigest()
 
@@ -83,7 +83,7 @@ class Board():
                         possible_moves.add((i + i_delta, j + j_delta))
         return list(map(lambda possible_move: Move(color, possible_move), possible_moves))
 
-    def get_list_of_patterns(self, move: Move) -> list:
+    def get_list_of_patterns(self, move: Move) -> list[(str, int)]:
         y, x = move.position
 
         horizontal_axe = self.matrix[y,:]
@@ -95,6 +95,13 @@ class Board():
         index_vertical = y
         index_main = min(x, y)
         index_secondary = min(18 - x, y)
+
+        return [
+            (''.join(map(str, horizontal_axe)), index_horizontal),
+            (''.join(map(str, vertical_axe)), index_vertical),
+            (''.join(map(str, main_diagonal)), index_main),
+            (''.join(map(str, secondary_diagonal)), index_secondary),
+        ]
 
 
         # print(offset_main_diagonal)

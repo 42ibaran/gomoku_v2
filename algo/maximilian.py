@@ -4,6 +4,7 @@ from typing import Union
 from algo.move import Move
 from algo.board import Board
 from algo.constants import WHITE, BLACK, EMPTY_CAPTURES_DICTIONARY
+from algo.masks import MASKS
 
 # hash_list = []
 hash_dictionary = {}
@@ -37,14 +38,22 @@ class MinMaxNode():
             self.board.undo_move()
 
     def evaluate(self):
-        self.board.get_list_of_patterns(self.move)
-        # self.board.dump()
-        # print(self.move.position)
+        patterns = self.board.get_list_of_patterns(self.move)
+        # each pattern in a tuple containing a row from matrix and the index of current move in it
+        for mask in MASKS:
+            for pattern, index in patterns:
+                if pattern.find(mask) != -1:
+                    print("YAAY!")
+                    self.board.dump()
+                    print(pattern)
+                    print(mask)
+                    print(self.move.position)
+                    exit()
 
 
 def retrieve_node_from_hashtable(board: Board, captures: dict, color: int) -> (Union[MinMaxNode, None], str):
     hash_value = board.get_hash(color)
-    hash_value = hash_value + '-' + str(captures[color]) + '-' + str(captures[-color])
+    hash_value = hash_value + '-' + str(captures[WHITE]) + '-' + str(captures[BLACK])
     if hash_value in hash_dictionary.keys():
         return hash_dictionary[hash_value], hash_value
     return None, hash_value
