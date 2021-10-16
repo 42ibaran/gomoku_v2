@@ -32,7 +32,7 @@ class Board():
                         capture_directions.append((i, j))
         return capture_directions
 
-    def get_hash(self, color: int) -> str:
+    def get_hash(self) -> str:
         # self.matrix.flags.writeable = False
         hash_value = sha1(self.matrix)
         # self.matrix.flags.writeable = True
@@ -91,17 +91,31 @@ class Board():
         main_diagonal = self.matrix.diagonal(x - y)
         secondary_diagonal = np.fliplr(self.matrix).diagonal(18 - x - y)
 
-        index_horizontal = x
-        index_vertical = y
-        index_main = min(x, y)
-        index_secondary = min(18 - x, y)
-
-        return [
-            (''.join(map(str, horizontal_axe)), index_horizontal),
-            (''.join(map(str, vertical_axe)), index_vertical),
-            (''.join(map(str, main_diagonal)), index_main),
-            (''.join(map(str, secondary_diagonal)), index_secondary),
+        pattern_list = [
+            (horizontal_axe, x),
+            (vertical_axe, y),
+            (main_diagonal, min(x, y)),
+            (secondary_diagonal, min(18 - x, y)),
         ]
+
+        updated_pattern_list = []
+
+        for pattern, index in pattern_list:
+            opponent_indices = np.where(pattern == -move.color)[0]
+            left_boundary = max(
+                0,
+                max(opponent_indices[opponent_indices < index]) + 1 if any(opponent_indices < index) else 0,
+                index - 5
+            )
+            right_boundary = min(
+                len(pattern) - 1,
+                min(opponent_indices[opponent_indices > index]) - 1 if any(opponent_indices > index) else len(pattern) - 1,
+                index + 5
+            )
+            new_index = index - left_boundary
+            updated_pattern_list.append((pattern[left_boundary:right_boundary + 1], new_index))
+
+        return updated_pattern_list
 
 
         # print(offset_main_diagonal)
