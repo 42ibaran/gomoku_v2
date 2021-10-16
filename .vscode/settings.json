@@ -2,5 +2,6 @@
     "cSpell.words": [
         "ndarray",
         "numpy"
-    ]
+    ],
+    "python.pythonPath": "/usr/local/bin/python3.9"
 }

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from hashlib import sha1
 from algo.move import Move
 from algo.constants import EMPTY
@@ -39,7 +40,9 @@ class Board():
         return hash_value.hexdigest()
 
     def dump(self):
-        print(np.array2string(self.matrix, max_line_width=np.inf))
+        index = range(19)
+        df = pd.DataFrame(self.matrix, columns=index, index=index)
+        print(df)
 
     def record_new_move(self, move: Move) -> int:
         if self.matrix[move.position] != EMPTY:
@@ -83,13 +86,15 @@ class Board():
                         possible_moves.add((i + i_delta, j + j_delta))
         return list(map(lambda possible_move: Move(color, possible_move), possible_moves))
 
-    def get_list_of_patterns(self, move: Move) -> list[(str, int)]:
+    def get_list_of_patterns(self, move: Move) -> list[np.ndarray]:
         y, x = move.position
 
-        horizontal_axe = self.matrix[y,:]
-        vertical_axe = self.matrix[:,x]
-        main_diagonal = self.matrix.diagonal(x - y)
-        secondary_diagonal = np.fliplr(self.matrix).diagonal(18 - x - y)
+        matrix_tmp = self.matrix * move.color
+
+        horizontal_axe = matrix_tmp[y,:]
+        vertical_axe = matrix_tmp[:,x]
+        main_diagonal = matrix_tmp.diagonal(x - y)
+        secondary_diagonal = np.fliplr(matrix_tmp).diagonal(18 - x - y)
 
         pattern_list = [
             (horizontal_axe, x),
@@ -98,24 +103,7 @@ class Board():
             (secondary_diagonal, min(18 - x, y)),
         ]
 
-        updated_pattern_list = []
-
-        for pattern, index in pattern_list:
-            opponent_indices = np.where(pattern == -move.color)[0]
-            left_boundary = max(
-                0,
-                max(opponent_indices[opponent_indices < index]) + 1 if any(opponent_indices < index) else 0,
-                index - 5
-            )
-            right_boundary = min(
-                len(pattern) - 1,
-                min(opponent_indices[opponent_indices > index]) - 1 if any(opponent_indices > index) else len(pattern) - 1,
-                index + 5
-            )
-            new_index = index - left_boundary
-            updated_pattern_list.append((pattern[left_boundary:right_boundary + 1], new_index))
-
-        return updated_pattern_list
+        return pattern_list
 
 
         # print(offset_main_diagonal)
