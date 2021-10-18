@@ -74,12 +74,18 @@ class MinMaxNode():
 
     def evaluate(self) -> None:
         patterns = self.board.get_list_of_patterns(self.move)
+        blocking_patterns = self.convert_patterns_to_blocking(patterns)
         for size, mask_dictionary in MASKS.items():
             small_patterns = self.divide_patterns_by_size(patterns, size)
+            small_blocking_patterns = self.divide_patterns_by_size(blocking_patterns, size)
             for pattern_code, masks in mask_dictionary.items():
                 matches = small_patterns.intersection(masks)
                 count_matches = len(matches)
                 self.score += PatternsValue[pattern_code] * count_matches
+                
+                blocking_matches = small_blocking_patterns.intersection(masks)
+                count_blocking_matches = len(blocking_matches)
+                self.score += PatternsValue[pattern_code + 1] * count_blocking_matches
         # self.score *= self.move.color
     
     def get_best_move(self) -> Move:
@@ -90,6 +96,14 @@ class MinMaxNode():
                 best_child = child
                 best_score = child.score
         return best_child.move
+
+    def convert_patterns_to_blocking(self, patterns):
+        blocking_patterns = []
+        for pattern, index in patterns:
+            pattern *= -1
+            pattern[index] = 1
+            blocking_patterns.append((pattern, index))
+        return blocking_patterns
 
     @staticmethod
     def divide_patterns_by_size(patterns, size):
