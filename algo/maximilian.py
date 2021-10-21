@@ -12,8 +12,8 @@ hash_dictionary = {}
 
 class MinMaxNode():
     __slots__ = ['board', 'move', 'captures', 'score', 'patterns', 'children', 
-                 'alpha', 'beta', 'maximizing', 'remaining_depth', 'children_positions',
-                 'possible_moves']
+                 'alpha', 'beta', 'maximizing', 'remaining_depth', 'possible_moves',
+                 'game_over']
 
     def __init__(self, board: Board, move: Move, captures: dict,
                  alpha: Union[int, float], beta: Union[int, float],
@@ -27,11 +27,11 @@ class MinMaxNode():
         self.beta = beta
         self.maximizing = maximizing
         self.remaining_depth = remaining_depth
-        self.children_positions = []
+        self.game_over = self.is_game_over()
         self.possible_moves = None
-        self.children = []
+        self.children = {}
         
-        if remaining_depth == 0 or self.is_game_over():
+        if remaining_depth == 0 or self.game_over:
             self.score = 0
             self.evaluate()
             return
@@ -43,8 +43,9 @@ class MinMaxNode():
         if self.possible_moves is None:
             self.possible_moves = self.board.get_possible_moves(self.move.get_opposite_color())
         for possible_move in self.possible_moves:
-            if possible_move.position in self.children_positions:
-                child = self.get_child_by_position(possible_move)
+            if possible_move.position in self.children.keys():
+                child = self.children[possible_move]
+                child.move = possible_move
                 child.update_with_depth(self.alpha, self.beta,
                                         not self.maximizing, self.remaining_depth - 1)
             else:
@@ -75,13 +76,14 @@ class MinMaxNode():
             child.move = move
             child.update_with_depth(self.alpha, self.beta,
                                     not self.maximizing, self.remaining_depth - 1)
-        self.children.append(child)
-        self.children_positions.append(move.position)
+        self.children[move] = child
         self.board.undo_move()
 
         return child
 
     def update_as_root(self, remaining_depth: int = 5):
+        if self.game_over:
+            return
         self.alpha = float('-inf')
         self.beta = float('inf')
         self.maximizing = True
@@ -90,7 +92,7 @@ class MinMaxNode():
         self.perform_minmax()
 
     def update_with_depth(self, alpha, beta, maximizing, remaining_depth):
-        if remaining_depth == self.remaining_depth:
+        if remaining_depth == self.remaining_depth or self.game_over:
             return
         self.alpha = alpha
         self.beta = beta
@@ -98,21 +100,6 @@ class MinMaxNode():
         self.score = float('-inf') if self.maximizing else float('inf')
         self.remaining_depth = remaining_depth
         self.perform_minmax()
-
-    def get_child_by_position(self, move: Move) -> MinMaxNode:
-        print("Children positions list: ", self.children_positions, sep="")
-        print("Looking for child with position: ", move.position, sep="")
-        print("Children:")
-        for child in self.children:
-            print(child.move.position)
-        input()
-        tmp_matrix = self.board.matrix.copy()
-        tmp_matrix[move.position] = move.color
-        child = next(filter(lambda child: ((child.board.matrix == tmp_matrix).all()), self.children))
-        child.move = move
-        print("Returning child with position: ", child.move.position, sep="")
-        # child.move = move
-        return child
 
     def is_game_over(self):
         # if any(capture == 10 for capture in self.captures.values()):
@@ -156,7 +143,7 @@ class MinMaxNode():
     def get_best_move(self) -> Move:
         best_child = None
         best_score = float('-inf')
-        for child in self.children:
+        for child in self.children.values():
             if child.score > best_score:
                 best_child = child
                 best_score = child.score
