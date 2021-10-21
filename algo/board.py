@@ -5,13 +5,14 @@ from algo.move import Move
 from algo.constants import EMPTY
 from algo.errors import YouAreDumbException
 
-# TODO add row and column indices to dump ✅
-
 class Board():
+    __slots__ = ['matrix', 'move_history', 'pattern_dict', 'possible_moves']
+
     def __init__(self):
         self.matrix = np.zeros((19, 19), dtype=int)
         self.move_history = []
         self.pattern_dict = {}
+        self.possible_moves = None
 
     def __find_captures(self, move: Move):
         capture_directions = []
@@ -74,6 +75,8 @@ class Board():
         # self.matrix[last_move.position] = EMPTY
 
     def get_possible_moves(self, color: int) -> list[Move]:
+        # if self.possible_moves is not None:
+        #     return list(map(lambda possible_move: Move(color, possible_move), self.possible_moves))
         possible_moves = set()
         full_cells_indices = np.transpose(self.matrix.nonzero())
         for full_cell_index in full_cells_indices:
@@ -110,3 +113,11 @@ class Board():
         ]
 
         return self.pattern_dict[move]
+
+    def copy(self):
+        new_board = Board()
+        new_board.matrix = self.matrix.copy()
+        new_board.move_history = self.move_history.copy()
+        new_board.pattern_dict = self.pattern_dict.copy()
+        
+        return new_board
