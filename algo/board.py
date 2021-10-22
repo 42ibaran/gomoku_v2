@@ -4,14 +4,15 @@ from hashlib import sha1
 from algo.move import Move
 from algo.constants import EMPTY
 from algo.errors import YouAreDumbException
+from algo.helpers import array_to_trinary
 
 class Board():
-    __slots__ = ['matrix', 'move_history', 'pattern_dict', 'possible_moves']
+    __slots__ = ['matrix', 'move_history', 'patterns', 'possible_moves']
 
     def __init__(self):
         self.matrix = np.zeros((19, 19), dtype=int)
         self.move_history = []
-        self.pattern_dict = {}
+        self.patterns = None
         self.possible_moves = None
 
     def __find_captures(self, move: Move):
@@ -92,32 +93,22 @@ class Board():
                         possible_moves.add((i + i_delta, j + j_delta))
         return list(map(lambda possible_move: Move(color, possible_move), possible_moves))
 
-    def get_list_of_patterns(self, move: Move) -> list[np.ndarray]:
-        if move in self.pattern_dict:
-            return self.pattern_dict[move]
+    def get_list_of_patterns(self, move: Move) -> list[int]:
+        # if self.patterns:
+            # return self.patterns
 
-        y, x = move.position
+        patterns = [self.matrix.diagonal(i) for i in range(-18, 19)]
+        patterns += [np.fliplr(self.matrix).diagonal(i) for i in range(-18, 19)]
+        patterns += self.matrix.tolist() + self.matrix.transpose().tolist()
+        self.patterns = list(map(lambda row: array_to_trinary(row), patterns))
+        self.patterns = [pattern for pattern in self.patterns if pattern != 0]
 
-        matrix_tmp = self.matrix * move.color
-
-        horizontal_axe = matrix_tmp[y,:]
-        vertical_axe = matrix_tmp[:,x]
-        main_diagonal = matrix_tmp.diagonal(x - y)
-        secondary_diagonal = np.fliplr(matrix_tmp).diagonal(18 - x - y)
-
-        self.pattern_dict[move] = [
-            (horizontal_axe, x),
-            (vertical_axe, y),
-            (main_diagonal, min(x, y)),
-            (secondary_diagonal, min(18 - x, y)),
-        ]
-
-        return self.pattern_dict[move]
-
+        return self.patterns
+        
     def copy(self):
         new_board = Board()
         new_board.matrix = self.matrix.copy()
         new_board.move_history = self.move_history.copy()
-        new_board.pattern_dict = self.pattern_dict.copy()
+        # new_board.patterns = self.patterns.copy()
         
         return new_board

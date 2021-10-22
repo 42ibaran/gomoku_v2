@@ -34,43 +34,51 @@ PatternsValue = {
 MASKS = {
     6: {
         Patterns.FREE_4: [
-            0x1e  # .XXXX.
+            0x78  # .XXXX.
         ],
     },
     5: {
         Patterns.FIVE_IN_A_ROW: [
-            0x1f  # XXXXX
+            0x79  # XXXXX
         ],
         Patterns.AX_DEVELOPING_TO_4: [
-            0x1e, # XXXX.
-            0xf,  # .XXXX
+            0x78, # XXXX.
+            0x28,  # .XXXX
         ],
         Patterns.AX_DEVELOPING_TO_3: [
-            0x1c, # XXX..
-            0xe,  # .XXX.
-            0x7,  # ..XXX
-            0x1a, # XX.X.
-            0xd,  # .XX.X
-            0x16, # X.XX.
-            0xb,  # .X.XX
-            0x19, # XX..X
-            0x15, # X.X.X
-            0x13, # X..XX
+            0x75, # XXX..
+            0x27,  # .XXX.
+            0xd,  # ..XXX
+            0x6f, # XX.X.
+            0x25,  # .XX.X
+            0x5d, # X.XX.
+            0x1f,  # .X.XX
+            0x6d, # XX..X
+            0x5b, # X.X.X
+            0x55, # X..XX
         ],
         Patterns.AX_DEVELOPING_TO_2: [
-            0x18, # XX...
-            0xc,  # .XX..
-            0x6,  # ..XX.
-            0x3,  # ...XX
-            0x14, # X.X..
-            0xa,  # .X.X.
-            0x5,  # ..X.X
-            0x12, # X..X.
-            0x9,  # .X..X
-            0x11, # X...X
+            0x6c, # XX...
+            0x24,  # .XX..
+            0xc,  # ..XX.
+            0x4,  # ...XX
+            0x5a, # X.X..
+            0x1e,  # .X.X.
+            0xa,  # ..X.X
+            0x54, # X..X.
+            0x1c,  # .X..X
+            0x52, # X...X
         ]
     }
 }
+
+masks_2 = {}
+
+for mask_length, mask_dictionary in MASKS.items():
+    masks_2[mask_length] = {}
+    for pattern_code, masks in mask_dictionary.items():
+        masks_2[mask_length][pattern_code] = [2*mask for mask in masks]
+
 
 BLOCKING_PATTERN_CODE_CONVERTION = {
     Patterns.AX_DEVELOPING_TO_2 : Patterns.BLOCK_AX_DEVELOPING_TO_2,

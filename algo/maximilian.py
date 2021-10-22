@@ -3,10 +3,11 @@ from __future__ import annotations
 import numpy as np
 import time
 from typing import Union
+from collections import Counter
 from algo.move import Move
 from algo.board import Board
 from algo.constants import WHITE, BLACK, EMPTY_CAPTURES_DICTIONARY
-from algo.masks import MASKS, BLOCKING_PATTERN_CODE_CONVERTION, Patterns, PatternsValue
+from algo.masks import MASKS, BLOCKING_PATTERN_CODE_CONVERTION, Patterns, PatternsValue, masks_2
 
 hash_dictionary = {}
 
@@ -32,14 +33,14 @@ class MinMaxNode():
         self.children = {}
         
         if remaining_depth == 0 or self.game_over:
-            self.score = 0
+            # self.board.dump()
+            # input()
             self.evaluate()
             return
 
         self.perform_minmax()
 
     def perform_minmax(self):
-        # self.dump()
         if self.possible_moves is None:
             self.possible_moves = self.board.get_possible_moves(self.move.get_opposite_color())
         for possible_move in self.possible_moves:
@@ -86,7 +87,7 @@ class MinMaxNode():
             return
         self.alpha = float('-inf')
         self.beta = float('inf')
-        self.maximizing = True
+        self.maximizing = False
         self.score = float('-inf') if self.maximizing else float('inf')
         self.remaining_depth = remaining_depth
         self.perform_minmax()
@@ -102,52 +103,77 @@ class MinMaxNode():
         self.perform_minmax()
 
     def is_game_over(self):
-        # if any(capture == 10 for capture in self.captures.values()):
-            # return True
-        small_patterns = self.divide_patterns_by_size(self.patterns, 5)
-        return MASKS[5][Patterns.FIVE_IN_A_ROW][0] in small_patterns
+        if 10 in self.captures.values():
+            return True
+        for pattern in self.patterns:
+            while pattern != 0:
+                small_pattern = pattern % 3**5
+                pattern //= 3
+                if small_pattern == 0x79 or small_pattern == 0xf2:
+                    return True
+        return False
 
     def dump(self):
         self.board.dump()
         print("Color: ", self.move.color, sep="")
         print("Position: ", self.move.position, sep="")
         print("Score: ", self.score, sep="")
-        # print("Children:")
-        # for child in self.children:
-        #     child.board.dump()
-        #     print("\tColor: ", child.move.color, sep="")
-        #     print("\tPosition: ", child.move.position, sep="")
-        #     print("\tScore: ", child.score, sep="", end="\n\n")
-        # print("=========")
-        input()
+        print("Children:")
+        for child in self.children.values():
+            child.board.dump()
+            print("\tColor: ", child.move.color, sep="")
+            print("\tPosition: ", child.move.position, sep="")
+            print("\tScore: ", child.score, sep="", end="\n\n")
+        print("=========")
 
     def evaluate(self) -> None:
+        self.score = 0
         # patterns = self.board.get_list_of_patterns(self.move)
         # self.score = PatternsValue[Patterns.CAPTURE] \
             # * (self.captures[self.move.color] \
             # - self.captures[self.move.get_opposite_color()])
-        blocking_patterns = self.convert_patterns_to_blocking(self.patterns)
-        for size, mask_dictionary in MASKS.items():
-            small_patterns = self.divide_patterns_by_size(self.patterns, size)
-            small_blocking_patterns = self.divide_patterns_by_size(blocking_patterns, size)
-            for pattern_code, masks in mask_dictionary.items():
-                matches = small_patterns.intersection(masks)
-                count_matches = len(matches)
-                self.score += PatternsValue[pattern_code] * count_matches
+        # print(self.patterns)
+        # input()
+        for mask_length, mask_dictionary in MASKS.items():
+            for pattern in self.patterns:
+                while pattern != 0:
+                    small_pattern = pattern % 3**mask_length
+                    pattern //= 3
+                    for pattern_code, masks in mask_dictionary.items():
+                        mask_occurrences = masks.count(small_pattern)
+                        mask_occurrences_2 = masks_2[mask_length][pattern_code].count(small_pattern)
+                        # print(small_pattern)
+                        # print(pattern_code)
+                        # print(mask_occurrences)
+                        # input()
+                        self.score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
+        # self.board.dump()
+        # print(self.score)
+        # input()
+
+        # blocking_patterns = self.convert_patterns_to_blocking(self.patterns)
+        # for size, mask_dictionary in MASKS.items():
+        #     small_patterns = self.divide_patterns_by_size(self.patterns, size)
+        #     small_blocking_patterns = self.divide_patterns_by_size(blocking_patterns, size)
+        #     for pattern_code, masks in mask_dictionary.items():
+        #         matches = small_patterns.intersection(masks)
+        #         count_matches = len(matches)
+        #         self.score += PatternsValue[pattern_code] * count_matches
                 
-                blocking_matches = small_blocking_patterns.intersection(masks)
-                count_blocking_matches = len(blocking_matches)
-                blocking_pattern_code = BLOCKING_PATTERN_CODE_CONVERTION[pattern_code]
-                self.score += PatternsValue[blocking_pattern_code] * count_blocking_matches
+        #         blocking_matches = small_blocking_patterns.intersection(masks)
+        #         count_blocking_matches = len(blocking_matches)
+        #         blocking_pattern_code = BLOCKING_PATTERN_CODE_CONVERTION[pattern_code]
+        #         self.score += PatternsValue[blocking_pattern_code] * count_blocking_matches
     
     def get_best_move(self) -> Move:
         best_child = None
-        best_score = float('-inf')
+        best_score = float('-inf') if self.maximizing else float('inf')
         for child in self.children.values():
-            if child.score > best_score:
+            if (self.maximizing and child.score > best_score) \
+                    or (not self.maximizing and child.score < best_score):
                 best_child = child
                 best_score = child.score
-        return best_child.move
+        return best_child.move, best_score
 
     def convert_patterns_to_blocking(self, patterns):
         blocking_patterns = []
@@ -196,11 +222,12 @@ class Maximilian():
         root, hash_value = retrieve_node_from_hashtable(board, last_move, captures.copy())
         if root is None:
             print("Creating new node.")
-            root = MinMaxNode(board, last_move, captures.copy(), float('-inf'), float('inf'), True)
-            print(root.score)
+            root = MinMaxNode(board, last_move, captures.copy(), float('-inf'), float('inf'), False)
             hash_dictionary[hash_value] = root
         else:
+            print("Got node from hashtable. Updating.")
             root.update_as_root()
-            print("Got node from hashtable. Children:")
-            root.dump()
-        return root.get_best_move()
+        move, score = root.get_best_move()
+        print(score)
+        root.dump()
+        return move
