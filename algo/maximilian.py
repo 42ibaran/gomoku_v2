@@ -53,14 +53,15 @@ class MinMaxNode():
                 child = self.add_child(possible_move)
             if self.maximizing:
                 self.score = max(self.score, child.score)
-                self.alpha = max(self.alpha, child.score)
-                if self.beta <= self.alpha:
-                    break
+                # self.alpha = max(self.alpha, child.score)
+                # if self.beta <= self.alpha:
+                #     break
             else:
                 self.score = min(self.score, child.score)
-                self.beta = min(self.beta, child.score)
-                if self.beta <= self.alpha:
-                    break
+                # self.beta = min(self.beta, child.score)
+                # if self.beta <= self.alpha:
+                #     break
+        # self.dump()
 
     def add_child(self, move) -> MinMaxNode:
         captures_count = self.board.record_new_move(move)
@@ -118,12 +119,14 @@ class MinMaxNode():
         print("Color: ", self.move.color, sep="")
         print("Position: ", self.move.position, sep="")
         print("Score: ", self.score, sep="")
+        print("Maximizing: ", self.maximizing, sep="")
         print("Children:")
         for child in self.children.values():
-            child.board.dump()
+            # child.board.dump()
             print("\tColor: ", child.move.color, sep="")
             print("\tPosition: ", child.move.position, sep="")
-            print("\tScore: ", child.score, sep="", end="\n\n")
+            print("\tScore: ", child.score, sep="")
+            print("\tMaximizing: ", child.maximizing, sep="", end="\n\n")
         print("=========")
 
     def evaluate(self) -> None:
@@ -142,10 +145,6 @@ class MinMaxNode():
                     for pattern_code, masks in mask_dictionary.items():
                         mask_occurrences = masks.count(small_pattern)
                         mask_occurrences_2 = masks_2[mask_length][pattern_code].count(small_pattern)
-                        # print(small_pattern)
-                        # print(pattern_code)
-                        # print(mask_occurrences)
-                        # input()
                         self.score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
         # self.board.dump()
         # print(self.score)
@@ -222,11 +221,11 @@ class Maximilian():
         root, hash_value = retrieve_node_from_hashtable(board, last_move, captures.copy())
         if root is None:
             print("Creating new node.")
-            root = MinMaxNode(board, last_move, captures.copy(), float('-inf'), float('inf'), False)
+            root = MinMaxNode(board, last_move, captures.copy(), float('-inf'), float('inf'), False, remaining_depth=3)
             hash_dictionary[hash_value] = root
         else:
             print("Got node from hashtable. Updating.")
-            root.update_as_root()
+            root.update_as_root(remaining_depth=3)
         move, score = root.get_best_move()
         print(score)
         root.dump()
