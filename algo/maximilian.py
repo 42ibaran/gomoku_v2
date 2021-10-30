@@ -48,7 +48,7 @@ class MinMaxNode():
         self.score = float('-inf') if maximizing else float('inf')
 
         c = time.time()
-        self.patterns = self.board.get_list_of_patterns(self.move)
+        self.patterns = self.board.get_list_of_patterns()
         d = time.time()
         time_get_patterns += (d - c)
         count_get_patterns += 1
