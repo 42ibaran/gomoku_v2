@@ -1,7 +1,7 @@
 import re
 from typing import Union
-from algo.constants import WHITE, BLACK, EMPTY
-from algo.errors import YouAreDumbException
+from .constants import WHITE, BLACK, EMPTY
+from .errors import YouAreDumbException
 
 REGEX_MOVE_STRING = r'^([0-9]|1[0-8]) ([0-9]|1[0-8])$'
 

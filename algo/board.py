@@ -1,10 +1,9 @@
 import numpy as np
 import pandas as pd
 from hashlib import sha1
-from algo.move import Move
-from algo.constants import EMPTY
-from algo.errors import YouAreDumbException
-from algo.helpers import array_to_trinary
+from .move import Move
+from .constants import EMPTY
+from .errors import YouAreDumbException
 
 # Patterns list explanation:
 #   First 19 numbers represent rows of the matrix
@@ -39,7 +38,7 @@ class Board():
                 if self.matrix[y + i][x + j] == move.opposite_color and \
                    self.matrix[y + 2*i][x + 2*j] == move.opposite_color and \
                    self.matrix[y + 3*i][x + 3*j] == move.color:
-                        capture_directions.append((i, j))
+                    capture_directions.append((i, j))
         return capture_directions
 
     def __update_patterns(self, move: Move, undo: bool = False) -> None:

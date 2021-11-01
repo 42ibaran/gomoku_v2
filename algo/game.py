@@ -1,7 +1,7 @@
-from algo.move import Move
-from algo.board import Board
-from algo.constants import EMPTY, EMPTY_CAPTURES_DICTIONARY
-from algo.errors import YouAreDumbException
+from .move import Move
+from .board import Board
+from .constants import EMPTY, EMPTY_CAPTURES_DICTIONARY
+from .errors import YouAreDumbException
 
 class Game():
     def __init__(self):
