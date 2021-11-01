@@ -1,7 +1,6 @@
 from .move import Move
 from .board import Board
-from .constants import EMPTY, EMPTY_CAPTURES_DICTIONARY
-from .errors import YouAreDumbException
+from .constants import EMPTY_CAPTURES_DICTIONARY
 
 class Game():
     def __init__(self):

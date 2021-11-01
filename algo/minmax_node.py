@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import numpy as np
 from typing import Union
 from .move import Move
 from .board import Board
 from .constants import WHITE, BLACK, PATTERN_SIZES
-from .masks import MASKS, BLOCKING_PATTERN_CODE_CONVERTION, Patterns, PatternsValue, masks_2
+from .masks import MASKS, Patterns, PatternsValue, masks_2
 
 minmax_nodes_hashtable = {}
 
