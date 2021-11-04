@@ -145,15 +145,12 @@ class MinMaxNode():
         for mask_size, mask_dictionary in MASKS.items():
             for pattern_index, pattern in enumerate(self.patterns):
                 pattern_size = PATTERN_SIZES[pattern_index]
-                while pattern != 0 and pattern_size >= mask_size:
-                    new_thread = threading.Thread(target=self.meow, 
-                                                  args=(pattern, pattern_size,
-                                                        mask_dictionary, mask_size,))
-                    threads.append(new_thread)
-                    new_thread.start()
-                    print("Starting thread %d" % (len(threads)))
-        for thread in enumerate(threads):
-            print("Joining thread %d" % (len(threads)))
+                new_thread = threading.Thread(target=self.meow,
+                                                args=(pattern, pattern_size,
+                                                    mask_dictionary, mask_size))
+                threads.append(new_thread)
+                new_thread.start()
+        for thread in threads:
             thread.join()
 
     def get_best_move(self) -> Move:
@@ -176,12 +173,13 @@ class MinMaxNode():
 
     def meow(self, pattern, pattern_size, mask_dictionary, mask_size):
         score = 0
-        small_pattern = pattern % 3**mask_size
-        pattern //= 3
-        pattern_size -= 1
-        for pattern_code, masks in mask_dictionary.items():
-            mask_occurrences = masks.count(small_pattern)
-            mask_occurrences_2 = masks_2[mask_size][pattern_code].count(small_pattern)
-            score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
-        with self._score_lock:
-            self.score += score
+        while pattern != 0 and pattern_size >= mask_size:
+            small_pattern = pattern % 3**mask_size
+            pattern //= 3
+            pattern_size -= 1
+            for pattern_code, masks in mask_dictionary.items():
+                mask_occurrences = masks.count(small_pattern)
+                mask_occurrences_2 = masks_2[mask_size][pattern_code].count(small_pattern)
+                score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
+            with self._score_lock:
+                self.score += score
