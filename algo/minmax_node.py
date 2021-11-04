@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from typing import Union
 from .move import Move
 from .board import Board
@@ -18,7 +19,7 @@ def retrieve_node_from_hashtable(board: Board, captures: dict) -> tuple[Union[Mi
 class MinMaxNode():
     __slots__ = ['board', 'move', 'captures', 'score', 'patterns', 'children', 
                  'alpha', 'beta', 'maximizing', 'remaining_depth', 'possible_moves',
-                 'parent', 'game_over']
+                 'parent', 'game_over', '_score_lock']
 
     def __init__(self, board: Board, move: Move, captures: dict,
                  alpha: Union[int, float], beta: Union[int, float],
@@ -36,6 +37,7 @@ class MinMaxNode():
         self.possible_moves = None
         self.parent = parent
         self.children = {}
+        self._score_lock = threading.Lock()
 
         if remaining_depth == 0 or self.game_over:
             self.evaluate()
@@ -136,20 +138,23 @@ class MinMaxNode():
         print("=========")
 
     def evaluate(self) -> None:
-        self.score = 0
-        self.score = PatternsValue[Patterns.CAPTURE] \
-            * (self.captures[WHITE] - self.captures[BLACK])
-        for mask_length, mask_dictionary in MASKS.items():
+        with self._score_lock:
+            self.score = PatternsValue[Patterns.CAPTURE] \
+                * (self.captures[WHITE] - self.captures[BLACK])
+        threads = list()
+        for mask_size, mask_dictionary in MASKS.items():
             for pattern_index, pattern in enumerate(self.patterns):
                 pattern_size = PATTERN_SIZES[pattern_index]
-                while pattern != 0 and pattern_size >= mask_length:
-                    small_pattern = pattern % 3**mask_length
-                    pattern //= 3
-                    pattern_size -= 1
-                    for pattern_code, masks in mask_dictionary.items():
-                        mask_occurrences = masks.count(small_pattern)
-                        mask_occurrences_2 = masks_2[mask_length][pattern_code].count(small_pattern)
-                        self.score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
+                while pattern != 0 and pattern_size >= mask_size:
+                    new_thread = threading.Thread(target=self.meow, 
+                                                  args=(pattern, pattern_size,
+                                                        mask_dictionary, mask_size,))
+                    threads.append(new_thread)
+                    new_thread.start()
+                    print("Starting thread %d" % (len(threads)))
+        for thread in enumerate(threads):
+            print("Starting thread %d" % (len(threads)))
+            thread.join()
 
     def get_best_move(self) -> Move:
         best_child = None
@@ -168,3 +173,15 @@ class MinMaxNode():
             pattern[index] = 1
             blocking_patterns.append((pattern, index))
         return blocking_patterns
+
+    def meow(self, pattern, pattern_size, mask_dictionary, mask_size):
+        score = 0
+        small_pattern = pattern % 3**mask_size
+        pattern //= 3
+        pattern_size -= 1
+        for pattern_code, masks in mask_dictionary.items():
+            mask_occurrences = masks.count(small_pattern)
+            mask_occurrences_2 = masks_2[mask_size][pattern_code].count(small_pattern)
+            score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
+        with self._score_lock:
+            self.score += score
