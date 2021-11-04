@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import time
 from hashlib import sha1
 from .move import Move
 from .constants import EMPTY
@@ -17,6 +18,8 @@ PATTERN_ROW            = 0
 PATTERN_COLUMN         = 0 + 19
 PATTERN_MAIN_DIAG      = 0 + 19 + 19
 PATTERN_SECONDARY_DIAG = 0 + 19 + 19 + 37
+
+calls = [0, 0]
 
 class Board():
     __slots__ = ['matrix', 'move_history', 'possible_moves', 'patterns']
@@ -133,11 +136,22 @@ class Board():
         return possible_moves
 
     def get_list_of_patterns(self) -> list[int]:
-        return self.patterns.copy()
+        return self.patterns
 
     def copy(self):
+        global calls
+        calls[0] += 1
+        a = time.time()
         new_board = Board()
         new_board.matrix = self.matrix.copy()
         new_board.move_history = self.move_history.copy()
-
+        new_board.patterns = self.patterns.copy()
+        new_board.possible_moves = self.possible_moves.copy() if self.possible_moves is not None else None
+        b = time.time()
+        calls[1] += (b - a)
         return new_board
+
+
+def print_board_performance():
+    global calls
+    print(calls)
