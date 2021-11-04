@@ -153,7 +153,7 @@ class MinMaxNode():
                     new_thread.start()
                     print("Starting thread %d" % (len(threads)))
         for thread in enumerate(threads):
-            print("Starting thread %d" % (len(threads)))
+            print("Joining thread %d" % (len(threads)))
             thread.join()
 
     def get_best_move(self) -> Move:
