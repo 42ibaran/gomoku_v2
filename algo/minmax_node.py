@@ -151,7 +151,7 @@ class MinMaxNode():
             for i in range(ceil(len(self.patterns) / PATTERNS_PER_THREAD)):
                 # self.meow(i * PATTERNS_PER_THREAD, mask_dictionary, mask_size)
                 new_thread = threading.Thread(target=self.meow,
-                                                # args=(i * PATTERNS_PER_THREAD, mask_dictionary, mask_size))
+                                                args=(i * PATTERNS_PER_THREAD, mask_dictionary, mask_size))
                 threads.append(new_thread)
                 new_thread.start()
                 new_thread.join()
