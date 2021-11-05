@@ -1,13 +1,22 @@
 from __future__ import annotations
 
+import time
 import numpy as np
+
+from math import ceil
 from typing import Union
+from functools import partial
 from .move import Move
 from .board import Board
 from .constants import WHITE, BLACK, PATTERN_SIZES
-from .masks import MASKS, BLOCKING_PATTERN_CODE_CONVERTION, Patterns, PatternsValue, masks_2
+from .masks import MASKS, Patterns, PatternsValue, masks_2
 
 minmax_nodes_hashtable = {}
+pattern_score_hashtable = {}
+
+calls = [0, 0]
+
+PATTERNS_PER_THREAD = 28
 
 def retrieve_node_from_hashtable(board: Board, captures: dict) -> tuple[Union[MinMaxNode, None], str]:
     hash_value = board.get_hash()
@@ -19,7 +28,7 @@ def retrieve_node_from_hashtable(board: Board, captures: dict) -> tuple[Union[Mi
 class MinMaxNode():
     __slots__ = ['board', 'move', 'captures', 'score', 'patterns', 'children', 
                  'alpha', 'beta', 'maximizing', 'remaining_depth', 'possible_moves',
-                 'parent', 'game_over']
+                 'parent', 'game_over', 'children_order']
 
     def __init__(self, board: Board, move: Move, captures: dict,
                  alpha: Union[int, float], beta: Union[int, float],
@@ -27,7 +36,7 @@ class MinMaxNode():
         self.board = board
         self.move = move
         self.captures = captures
-        self.score = float('-inf') if maximizing else float('inf')
+        # self.score = float('-inf') if maximizing else float('inf')
         self.patterns = self.board.get_list_of_patterns()
         self.alpha = alpha
         self.beta = beta
@@ -37,25 +46,26 @@ class MinMaxNode():
         self.possible_moves = None
         self.parent = parent
         self.children = {}
-
-        if remaining_depth == 0 or self.game_over:
-            self.evaluate()
-            return
-
-        self.perform_minmax()
+        self.children_order = []
+        self.evaluate()
 
     def perform_minmax(self):
+        if self.remaining_depth == 0 or self.game_over:
+            return
+        self.score = float('-inf') if self.maximizing else float('inf')
         if self.possible_moves is None:
             parent_possible_moves = self.parent.possible_moves.copy() if self.parent else None
             self.possible_moves = self.board.get_possible_moves(parent_possible_moves, self.move)
         for possible_move in self.possible_moves:
             if possible_move.position in self.children.keys():
-                child = self.children[possible_move]
-                child.move = possible_move
                 child.update_with_depth(self.alpha, self.beta,
                                         not self.maximizing, self, self.remaining_depth - 1)
             else:
                 child = self.add_child(possible_move)
+        self.order_children_by_score()
+        for move in self.children_order:
+            child = self.children[move]
+            child.perform_minmax()
             if self.maximizing:
                 self.score = max(self.score, child.score)
                 self.alpha = max(self.alpha, child.score)
@@ -66,6 +76,9 @@ class MinMaxNode():
                 self.beta = min(self.beta, child.score)
                 if self.beta <= self.alpha:
                     break
+    
+    def order_children_by_score(self):
+        self.children_order = sorted(self.children, key=lambda x: self.children[x].score, reverse=not self.maximizing)
 
     def add_child(self, move) -> MinMaxNode:
         captures_count = self.board.record_new_move(move)
@@ -74,7 +87,7 @@ class MinMaxNode():
 
         child, hash_value = retrieve_node_from_hashtable(self.board, child_captures)
         if child is None:
-            child = MinMaxNode(self.board, move, child_captures,
+            child = MinMaxNode(self.board.copy(), move, child_captures,
                                self.alpha, self.beta, not self.maximizing,
                                self, self.remaining_depth - 1)
             minmax_nodes_hashtable[hash_value] = child
@@ -96,7 +109,6 @@ class MinMaxNode():
         self.maximizing = False
         self.score = float('-inf') if self.maximizing else float('inf')
         self.remaining_depth = remaining_depth
-        self.perform_minmax()
 
     def update_with_depth(self, alpha, beta, maximizing, parent, remaining_depth):
         if remaining_depth == self.remaining_depth or self.game_over:
@@ -107,7 +119,6 @@ class MinMaxNode():
         self.score = float('-inf') if self.maximizing else float('inf')
         self.parent = parent
         self.remaining_depth = remaining_depth
-        self.perform_minmax()
 
     def is_game_over(self):
         if 10 in self.captures.values():
@@ -137,20 +148,36 @@ class MinMaxNode():
         print("=========")
 
     def evaluate(self) -> None:
-        self.score = 0
+        global calls
+        calls[0] += 1
+        a = time.time()
         self.score = PatternsValue[Patterns.CAPTURE] \
             * (self.captures[WHITE] - self.captures[BLACK])
-        for mask_length, mask_dictionary in MASKS.items():
-            for pattern_index, pattern in enumerate(self.patterns):
-                pattern_size = PATTERN_SIZES[pattern_index]
-                while pattern != 0 and pattern_size >= mask_length:
-                    small_pattern = pattern % 3**mask_length
-                    pattern //= 3
-                    pattern_size -= 1
-                    for pattern_code, masks in mask_dictionary.items():
-                        mask_occurrences = masks.count(small_pattern)
-                        mask_occurrences_2 = masks_2[mask_length][pattern_code].count(small_pattern)
-                        self.score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
+        for pattern, pattern_size in zip(self.patterns, PATTERN_SIZES):
+            hash_value = hash((pattern_size, pattern))
+            if hash_value in pattern_score_hashtable:
+                self.score += pattern_score_hashtable[hash_value]
+            else:
+                pattern_score = 0
+                for mask_size, mask_dictionary in MASKS.items():
+                    pattern_score += self.get_score_per_pattern(mask_dictionary, mask_size, pattern, pattern_size)
+                self.score += pattern_score
+                pattern_score_hashtable[hash_value] = pattern_score
+        b = time.time()
+        calls[1] += (b - a)
+
+    @staticmethod
+    def get_score_per_pattern(mask_dictionary, mask_size, pattern, pattern_size) -> int:
+        score = 0
+        while pattern != 0 and pattern_size >= mask_size:
+            small_pattern = pattern % 3**mask_size
+            pattern //= 3
+            pattern_size -= 1
+            for pattern_code, masks in mask_dictionary.items():
+                mask_occurrences = masks.count(small_pattern)
+                mask_occurrences_2 = masks_2[mask_size][pattern_code].count(small_pattern)
+                score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
+        return score
 
     def get_best_move(self) -> Move:
         best_child = None
@@ -169,3 +196,7 @@ class MinMaxNode():
             pattern[index] = 1
             blocking_patterns.append((pattern, index))
         return blocking_patterns
+
+def print_evaluate_performance():
+    global calls
+    print(calls)
