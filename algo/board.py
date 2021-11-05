@@ -1,10 +1,12 @@
 import numpy as np
 import pandas as pd
 import time
+import pickle
 from hashlib import sha1
 from .move import Move
-from .constants import EMPTY
+from .constants import EMPTY, WHITE, BLACK, PATTERN_SIZES
 from .errors import YouAreDumbException
+from .masks import MASKS, Patterns, PatternsValue, masks_2
 
 # Patterns list explanation:
 #   First 19 numbers represent rows of the matrix
@@ -19,16 +21,18 @@ PATTERN_COLUMN         = 0 + 19
 PATTERN_MAIN_DIAG      = 0 + 19 + 19
 PATTERN_SECONDARY_DIAG = 0 + 19 + 19 + 37
 
-calls = [0, 0]
+pattern_score_hashtable = {}
 
 class Board():
-    __slots__ = ['matrix', 'move_history', 'possible_moves', 'patterns']
+    __slots__ = ['matrix', 'move_history', 'possible_moves', 'patterns', 'score', 'is_five_in_a_row']
 
     def __init__(self):
         self.matrix = np.zeros((19, 19), dtype=int)
         self.move_history = [Move]
         self.patterns = [0] * ((19 + 37) * 2)
         self.possible_moves = None
+        self.score = None
+        self.is_five_in_a_row = None
 
     def __find_captures(self, move: Move) -> list[tuple[int]]:
         capture_directions = []
@@ -138,20 +142,84 @@ class Board():
     def get_list_of_patterns(self) -> list[int]:
         return self.patterns
 
+    def evaluate(self) -> (int, bool):
+        if self.score is not None and self.is_five_in_a_row is not None:
+            return self.score, self.is_five_in_a_row
+        # if self.captures[WHITE] >= 10 or self.captures[BLACK] >= 10:
+            # self.game_over = True
+        self.score = 0
+        self.is_five_in_a_row = False
+        for pattern, pattern_size in zip(self.patterns, PATTERN_SIZES):
+            hash_value = hash((pattern_size, pattern))
+            if hash_value in pattern_score_hashtable:
+                result = pattern_score_hashtable[hash_value]
+                self.score += result[0]
+                self.is_five_in_a_row = self.is_five_in_a_row if not result[1] else True
+            else:
+                pattern_score = 0
+                for mask_size, mask_dictionary in MASKS.items():
+                    result = self.get_score_per_pattern(mask_dictionary, mask_size, pattern, pattern_size)
+                    pattern_score += result[0]
+                    self.is_five_in_a_row = self.is_five_in_a_row if not result[1] else True
+                self.score += pattern_score
+                pattern_score_hashtable[hash_value] = (pattern_score, self.is_five_in_a_row)
+        return self.score, self.is_five_in_a_row
+
+    def get_score_per_pattern(self, mask_dictionary, mask_size, pattern, pattern_size) -> (int, bool):
+        score = 0
+        is_five_in_a_row = False
+        while pattern != 0 and pattern_size >= mask_size:
+            small_pattern = pattern % 3**mask_size
+            pattern //= 3
+            pattern_size -= 1
+            for pattern_code, masks in mask_dictionary.items():
+                mask_occurrences = masks.count(small_pattern)
+                mask_occurrences_2 = masks_2[mask_size][pattern_code].count(small_pattern)
+                if pattern_code == Patterns.FIVE_IN_A_ROW and (mask_occurrences > 0 or mask_occurrences_2 > 0):
+                    print("IT'S BRITNEY BITCH")
+                    is_five_in_a_row = True
+                score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
+        return score, is_five_in_a_row
+
+    def check_if_over(self, last_move):
+        # if self.captures[WHITE] >= 10 or self.captures[BLACK] >= 10:
+            # self.is_over = True
+            # return
+        _, is_five_in_a_row = self.evaluate()
+        if not is_five_in_a_row:
+            return False
+        possible_moves = self.get_possible_moves(None, last_move)
+        for possible_move in possible_moves:
+            tmp_board = self.copy()
+            print(possible_move.position)
+            tmp_board.record_new_move(possible_move)
+            _, is_five_in_a_row = tmp_board.evaluate()
+            # self.undo_move()
+            if not is_five_in_a_row:
+                return False
+        return True
+
     def copy(self):
-        global calls
-        calls[0] += 1
-        a = time.time()
         new_board = Board()
         new_board.matrix = self.matrix.copy()
         new_board.move_history = self.move_history.copy()
         new_board.patterns = self.patterns.copy()
         new_board.possible_moves = self.possible_moves.copy() if self.possible_moves is not None else None
-        b = time.time()
-        calls[1] += (b - a)
         return new_board
 
 
 def print_board_performance():
     global calls
     print(calls)
+
+def save_hashtables():
+    pickle.dump(pattern_score_hashtable, open("pattern_score_hashtable.pickle", "wb"))
+
+def load_hashtables():
+    global pattern_score_hashtable
+    try:
+        pattern_score_hashtable = pickle.load(open("pattern_score_hashtable.pickle", "rb"))
+    except FileNotFoundError:
+        print("Hmm, pattern_score_hashtable pickle file not found?")
+        pattern_score_hashtable = {}
+

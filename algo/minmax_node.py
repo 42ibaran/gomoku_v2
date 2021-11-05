@@ -52,33 +52,6 @@ class MinMaxNode():
         self.children_order = []
         self.evaluate()
 
-    def perform_minmax(self):
-        if self.remaining_depth == 0 or self.game_over:
-            return
-        self.score = float('-inf') if self.maximizing else float('inf')
-        if self.possible_moves is None:
-            parent_possible_moves = self.parent.possible_moves.copy() if self.parent else None
-            self.possible_moves = self.board.get_possible_moves(parent_possible_moves, self.move)
-        for possible_move in self.possible_moves:
-            if possible_move.position in self.children.keys():
-                child.update_with_depth(self.alpha, self.beta,
-                                        not self.maximizing, self, self.remaining_depth - 1)
-            else:
-                child = self.add_child(possible_move)
-        self.order_children_by_score()
-        for move in self.children_order:
-            child = self.children[move]
-            child.perform_minmax()
-            if self.maximizing:
-                self.score = max(self.score, child.score)
-                self.alpha = max(self.alpha, child.score)
-                if self.beta <= self.alpha:
-                    break
-            else:
-                self.score = min(self.score, child.score)
-                self.beta = min(self.beta, child.score)
-                if self.beta <= self.alpha:
-                    break
     
     def order_children_by_score(self):
         self.children_order = sorted(self.children, key=lambda x: self.children[x].score, reverse=not self.maximizing)
@@ -137,40 +110,6 @@ class MinMaxNode():
             print("\tMaximizing: ", child.maximizing, sep="", end="\n\n")
         print("=========")
 
-    def evaluate(self) -> None:
-        global calls
-        calls[0] += 1
-        a = time.time()
-        if self.captures[WHITE] >= 10 or self.captures[BLACK] >= 10:
-            self.game_over = True
-        self.score = PatternsValue[Patterns.CAPTURE] \
-            * (self.captures[WHITE] - self.captures[BLACK])
-        for pattern, pattern_size in zip(self.patterns, PATTERN_SIZES):
-            hash_value = hash((pattern_size, pattern))
-            if hash_value in pattern_score_hashtable:
-                self.score += pattern_score_hashtable[hash_value]
-            else:
-                pattern_score = 0
-                for mask_size, mask_dictionary in MASKS.items():
-                    pattern_score += self.get_score_per_pattern(mask_dictionary, mask_size, pattern, pattern_size)
-                self.score += pattern_score
-                pattern_score_hashtable[hash_value] = pattern_score
-        b = time.time()
-        calls[1] += (b - a)
-
-    def get_score_per_pattern(self, mask_dictionary, mask_size, pattern, pattern_size) -> int:
-        score = 0
-        while pattern != 0 and pattern_size >= mask_size:
-            small_pattern = pattern % 3**mask_size
-            pattern //= 3
-            pattern_size -= 1
-            for pattern_code, masks in mask_dictionary.items():
-                mask_occurrences = masks.count(small_pattern)
-                mask_occurrences_2 = masks_2[mask_size][pattern_code].count(small_pattern)
-                if pattern_code == Patterns.FIVE_IN_A_ROW and (mask_occurrences > 0 or mask_occurrences_2 > 0):
-                    self.game_over = True
-                score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
-        return score
 
     def get_best_move(self) -> Move:
         best_child = None
