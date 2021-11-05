@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import time
 import numpy as np
+import pickle
+import json
 
 from math import ceil
 from typing import Union
@@ -42,7 +44,8 @@ class MinMaxNode():
         self.beta = beta
         self.maximizing = maximizing
         self.remaining_depth = remaining_depth
-        self.game_over = self.is_game_over()
+        self.game_over = False
+        # self.game_over = self.is_game_over()
         self.possible_moves = None
         self.parent = parent
         self.children = {}
@@ -120,19 +123,6 @@ class MinMaxNode():
         self.parent = parent
         self.remaining_depth = remaining_depth
 
-    def is_game_over(self):
-        if 10 in self.captures.values():
-            return True
-        for pattern_index, pattern in enumerate(self.patterns):
-            pattern_size = PATTERN_SIZES[pattern_index]
-            while pattern != 0 and pattern_size >= 5:
-                small_pattern = pattern % 3**5
-                pattern //= 3
-                pattern_size -= 1
-                if small_pattern == 0x79 or small_pattern == 0xf2:
-                    return True
-        return False
-
     def dump(self):
         self.board.dump()
         print("Color: ", self.move.color, sep="")
@@ -151,6 +141,8 @@ class MinMaxNode():
         global calls
         calls[0] += 1
         a = time.time()
+        if self.captures[WHITE] >= 10 or self.captures[BLACK] >= 10:
+            self.game_over = True
         self.score = PatternsValue[Patterns.CAPTURE] \
             * (self.captures[WHITE] - self.captures[BLACK])
         for pattern, pattern_size in zip(self.patterns, PATTERN_SIZES):
@@ -166,8 +158,7 @@ class MinMaxNode():
         b = time.time()
         calls[1] += (b - a)
 
-    @staticmethod
-    def get_score_per_pattern(mask_dictionary, mask_size, pattern, pattern_size) -> int:
+    def get_score_per_pattern(self, mask_dictionary, mask_size, pattern, pattern_size) -> int:
         score = 0
         while pattern != 0 and pattern_size >= mask_size:
             small_pattern = pattern % 3**mask_size
@@ -176,6 +167,8 @@ class MinMaxNode():
             for pattern_code, masks in mask_dictionary.items():
                 mask_occurrences = masks.count(small_pattern)
                 mask_occurrences_2 = masks_2[mask_size][pattern_code].count(small_pattern)
+                if pattern_code == Patterns.FIVE_IN_A_ROW and (mask_occurrences > 0 or mask_occurrences_2 > 0):
+                    self.game_over = True
                 score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
         return score
 
@@ -198,5 +191,38 @@ class MinMaxNode():
         return blocking_patterns
 
 def print_evaluate_performance():
-    global calls
     print(calls)
+
+def save_hashtables():
+    # with open("minmax_nodes_hashtable.json", "w") as outfile:
+    #     json.dump(minmax_nodes_hashtable, outfile)
+    # with open("pattern_score_hashtable.json", "w") as outfile:
+    #     json.dump(pattern_score_hashtable, outfile)
+    pickle.dump(minmax_nodes_hashtable, open("minmax_nodes_hashtable.pickle", "wb"))
+    pickle.dump(pattern_score_hashtable, open("pattern_score_hashtable.pickle", "wb"))
+
+def load_hashtables():
+    global pattern_score_hashtable #, minmax_nodes_hashtable
+    # try:
+    #     with open("minmax_nodes_hashtable.json", "r") as json_file:
+    #         minmax_nodes_hashtable = json.load(json_file)
+    # except FileNotFoundError:
+    #     print("Hmm, minmax_nodes_hashtable pickle file not found?")
+    #     minmax_nodes_hashtable = {}
+    # try:
+    #     with open("pattern_score_hashtable.json", "r") as json_file:
+    #        pattern_score_hashtable = json.load(json_file)
+    # except FileNotFoundError:
+    #     print("Hmm, pattern_score_hashtable pickle file not found?")
+    #     pattern_score_hashtable = {}
+
+    try:
+        minmax_nodes_hashtable = pickle.load(open("minmax_nodes_hashtable.pickle", "rb"))
+    except FileNotFoundError:
+        print("Hmm, minmax_nodes_hashtable pickle file not found?")
+        minmax_nodes_hashtable = {}
+    try:
+        pattern_score_hashtable = pickle.load(open("pattern_score_hashtable.pickle", "rb"))
+    except FileNotFoundError:
+        print("Hmm, pattern_score_hashtable pickle file not found?")
+        pattern_score_hashtable = {}

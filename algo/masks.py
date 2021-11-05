@@ -14,22 +14,23 @@ Patterns = Enum(
     FIVE_IN_A_ROW
     BLOCK_FIVE_IN_A_ROW
     CAPTURE
+    POTENTIAL_CAPTURE
     """
-) # POTENTIAL_CAPTURE
+)
 
 PatternsValue = {
     Patterns.AX_DEVELOPING_TO_2       : 1,
     Patterns.BLOCK_AX_DEVELOPING_TO_2 : 10,
-    # Patterns.POTENTIAL_CAPTURE        : 100,
-    Patterns.AX_DEVELOPING_TO_3       : 100,
-    Patterns.BLOCK_AX_DEVELOPING_TO_3 : 1000,
-    Patterns.AX_DEVELOPING_TO_4       : 10000,
-    Patterns.BLOCK_AX_DEVELOPING_TO_4 : 100000,
-    Patterns.FREE_4                   : 1000000,
-    Patterns.BLOCK_FREE_4             : 10000000,
-    Patterns.CAPTURE                  : 100000000,
-    Patterns.FIVE_IN_A_ROW            : 1000000000,
-    Patterns.BLOCK_FIVE_IN_A_ROW      : 10000000000,
+    Patterns.POTENTIAL_CAPTURE        : 100,
+    Patterns.AX_DEVELOPING_TO_3       : 1000,
+    Patterns.BLOCK_AX_DEVELOPING_TO_3 : 10000,
+    Patterns.AX_DEVELOPING_TO_4       : 100000,
+    Patterns.BLOCK_AX_DEVELOPING_TO_4 : 1000000,
+    Patterns.FREE_4                   : 10000000,
+    Patterns.BLOCK_FREE_4             : 100000000,
+    Patterns.CAPTURE                  : 1000000000,
+    Patterns.FIVE_IN_A_ROW            : 10000000000,
+    Patterns.BLOCK_FIVE_IN_A_ROW      : 100000000000,
 }
 
 MASKS = {
@@ -91,12 +92,12 @@ MASKS = {
             0x52,   # X...X
         ]
     },
-    # 4: {
-    #     Patterns.POTENTIAL_CAPTURE: [
-    #         0x19,   # .OOX
-    #         0x33    # XOO.
-    #     ]
-    # }
+    4: {
+        Patterns.POTENTIAL_CAPTURE: [
+            0x19,   # .OOX
+            0x33    # XOO.
+        ]
+    }
 }
 
 masks_2 = {}

@@ -1,6 +1,7 @@
 import argparse
 import sys
 from algo.maximilian import Maximilian
+from algo.minmax_node import load_hashtables, save_hashtables
 from algo.game import Game
 from algo.move import Move
 from algo.constants import WHITE, BLACK
@@ -24,6 +25,7 @@ def get_human_move():
 
 def play_in_terminal():
     game = Game()
+    load_hashtables()
     while True:
         move_human = get_human_move()
         game.record_new_move(move_human)
@@ -31,6 +33,8 @@ def play_in_terminal():
         game.record_new_move(move_maximilian)
         print(move_maximilian.position)
         game.dump()
+        save_hashtables()
+    
 
 if __name__ == "__main__":
     arguments = parse_arguments()
