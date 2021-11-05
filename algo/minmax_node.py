@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import threading
-import multiprocessing as mp
 import time
+import numpy as np
 
 from math import ceil
 from typing import Union
@@ -11,7 +10,6 @@ from .move import Move
 from .board import Board
 from .constants import WHITE, BLACK, PATTERN_SIZES
 from .masks import MASKS, Patterns, PatternsValue, masks_2
-from .globals import evaluate_calls
 
 minmax_nodes_hashtable = {}
 pattern_score_hashtable = {}
@@ -50,13 +48,6 @@ class MinMaxNode():
         self.children = {}
         self.children_order = []
         self.evaluate()
-        # self._score_lock = threading.Lock()
-
-        # if remaining_depth == 0 or self.game_over:
-        #     self.evaluate()
-        #     return
-
-        # self.perform_minmax()
 
     def perform_minmax(self):
         if self.remaining_depth == 0 or self.game_over:
@@ -67,8 +58,6 @@ class MinMaxNode():
             self.possible_moves = self.board.get_possible_moves(parent_possible_moves, self.move)
         for possible_move in self.possible_moves:
             if possible_move.position in self.children.keys():
-                # child = self.children[possible_move]
-                # child.move = possible_move
                 child.update_with_depth(self.alpha, self.beta,
                                         not self.maximizing, self, self.remaining_depth - 1)
             else:
@@ -76,7 +65,6 @@ class MinMaxNode():
         self.order_children_by_score()
         for move in self.children_order:
             child = self.children[move]
-            # child.move = move
             child.perform_minmax()
             if self.maximizing:
                 self.score = max(self.score, child.score)
@@ -91,9 +79,6 @@ class MinMaxNode():
     
     def order_children_by_score(self):
         self.children_order = sorted(self.children, key=lambda x: self.children[x].score, reverse=not self.maximizing)
-        # for move in self.children_order:
-        #     print(move.position, self.children[move].score)
-        # input()
 
     def add_child(self, move) -> MinMaxNode:
         captures_count = self.board.record_new_move(move)
@@ -124,7 +109,6 @@ class MinMaxNode():
         self.maximizing = False
         self.score = float('-inf') if self.maximizing else float('inf')
         self.remaining_depth = remaining_depth
-        # self.perform_minmax()
 
     def update_with_depth(self, alpha, beta, maximizing, parent, remaining_depth):
         if remaining_depth == self.remaining_depth or self.game_over:
@@ -135,7 +119,6 @@ class MinMaxNode():
         self.score = float('-inf') if self.maximizing else float('inf')
         self.parent = parent
         self.remaining_depth = remaining_depth
-        # self.perform_minmax()
 
     def is_game_over(self):
         if 10 in self.captures.values():
@@ -170,22 +153,21 @@ class MinMaxNode():
         a = time.time()
         self.score = PatternsValue[Patterns.CAPTURE] \
             * (self.captures[WHITE] - self.captures[BLACK])
-        # proc_pool = mp.Pool()
-        for mask_size, mask_dictionary in MASKS.items():
-            for pattern, pattern_size in zip(self.patterns, PATTERN_SIZES):
-                self.score += self.get_score_per_pattern(mask_dictionary, mask_size, pattern, pattern_size)
+        for pattern, pattern_size in zip(self.patterns, PATTERN_SIZES):
+            hash_value = hash((pattern_size, pattern))
+            if hash_value in pattern_score_hashtable:
+                self.score += pattern_score_hashtable[hash_value]
+            else:
+                pattern_score = 0
+                for mask_size, mask_dictionary in MASKS.items():
+                    pattern_score += self.get_score_per_pattern(mask_dictionary, mask_size, pattern, pattern_size)
+                self.score += pattern_score
+                pattern_score_hashtable[hash_value] = pattern_score
         b = time.time()
         calls[1] += (b - a)
-            # self.score += sum(proc_pool.imap_unordered(partial(self.get_score_per_pattern, mask_dictionary, mask_size),
-                                                    #    iterable=zip(self.patterns, PATTERN_SIZES),
-                                                    #    chunksize=PATTERNS_PER_THREAD))
-        # proc_pool.close()
-        # proc_pool.join()
 
     @staticmethod
     def get_score_per_pattern(mask_dictionary, mask_size, pattern, pattern_size) -> int:
-        if pattern_size in pattern_score_hashtable.keys() and pattern in pattern_score_hashtable[pattern_size].keys():
-            return pattern_score_hashtable[pattern_size][pattern]
         score = 0
         while pattern != 0 and pattern_size >= mask_size:
             small_pattern = pattern % 3**mask_size
@@ -195,10 +177,6 @@ class MinMaxNode():
                 mask_occurrences = masks.count(small_pattern)
                 mask_occurrences_2 = masks_2[mask_size][pattern_code].count(small_pattern)
                 score += PatternsValue[pattern_code] * (mask_occurrences - mask_occurrences_2)
-        if pattern_size in pattern_score_hashtable.keys():
-            pattern_score_hashtable[pattern_size][pattern] = score
-        else:
-            pattern_score_hashtable[pattern_size] = {pattern : score}
         return score
 
     def get_best_move(self) -> Move:

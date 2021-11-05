@@ -4,7 +4,6 @@ from .minmax_node import MinMaxNode, retrieve_node_from_hashtable, \
                          minmax_nodes_hashtable, print_evaluate_performance
 from .move import Move
 from .board import Board, print_board_performance
-from .globals import evaluate_calls
 import time
 
 class Maximilian():
@@ -23,9 +22,9 @@ class Maximilian():
             root.update_as_root(remaining_depth=3)
         root.perform_minmax()
         move = root.get_best_move()
+        root.dump()
         b = time.time()
         print("Time: %f" % (b - a))
-        print(evaluate_calls)
         print_board_performance()
         print_evaluate_performance()
         return move
