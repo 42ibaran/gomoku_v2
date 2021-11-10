@@ -39,7 +39,7 @@ def play_in_terminal(human_vs_maximilian):
             print("It's over bitch.")
             break
         a = time.time()
-        move_maximilian = maximilian.get_next_move(game.board)
+        move_maximilian = maximilian.get_next_move(game.board.copy())
         b = time.time()
         print("Time: %f" % (b - a))
         if human_vs_maximilian:

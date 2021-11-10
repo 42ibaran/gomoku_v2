@@ -9,12 +9,10 @@ class Game():
         self.is_over = False
 
     def record_new_move(self, move: Move) -> None:
-        self.board.record_new_move(move)
-        self.is_over = self.board.check_if_over(None, True)
+        self.board = self.board.record_new_move(move)
+        self.is_over = self.board.check_if_over(None)
 
     def dump(self):
         self.board.dump()
-        if self.is_over:
-            print(self.board.patterns)
         print("White captures: %d" % (self.board.captures_history[-1][WHITE]))
         print("Black captures: %d" % (self.board.captures_history[-1][BLACK]))
