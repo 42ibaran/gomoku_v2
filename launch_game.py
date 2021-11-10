@@ -34,15 +34,17 @@ def play_in_terminal(human_vs_maximilian):
         move_human = get_human_move(last_move.opposite_color if last_move else BLACK)
         last_move = move_human
         game.record_new_move(move_human)
+        game.dump()
         if game.is_over:
             print("It's over bitch.")
             break
         a = time.time()
-        move_maximilian = maximilian.get_next_move(game.board, move_human, game.captures)
+        move_maximilian = maximilian.get_next_move(game.board)
         b = time.time()
         print("Time: %f" % (b - a))
         if human_vs_maximilian:
             game.record_new_move(move_maximilian)
+            game.dump()
             last_move = move_maximilian
             if game.is_over:
                 print("It's over bitch.")
@@ -50,7 +52,6 @@ def play_in_terminal(human_vs_maximilian):
             print("Computer's move: ", move_maximilian.position, sep="")
         else:
             print("Suggested move: ", move_maximilian.position, sep="")
-        game.dump()
         save_hashtables()
     
 

@@ -63,7 +63,7 @@ class MinMaxNode():
 
         child, hash_value = retrieve_node_from_hashtable(self.board, child_captures)
         if child is None:
-            child = MinMaxNode(self.board.copy(), move, child_captures,
+            child = MinMaxNode(self.board, move, child_captures,
                                self.alpha, self.beta, not self.maximizing,
                                self, self.remaining_depth - 1)
             minmax_nodes_hashtable[hash_value] = child

@@ -9,13 +9,12 @@ class Game():
         self.is_over = False
 
     def record_new_move(self, move: Move) -> None:
-        captures_count = self.board.record_new_move(move)
-        self.captures[move.color] += captures_count
-        if self.captures[WHITE] >= 10 or self.captures[BLACK] >= 10 or self.board.check_if_over(move):
-            self.is_over = True        
-        return captures_count
+        self.board.record_new_move(move)
+        self.is_over = self.board.check_if_over(None, True)
 
     def dump(self):
         self.board.dump()
-        print("White captures: %d" % (self.captures[WHITE]))
-        print("Black captures: %d" % (self.captures[BLACK]))
+        if self.is_over:
+            print(self.board.patterns)
+        print("White captures: %d" % (self.board.captures_history[-1][WHITE]))
+        print("Black captures: %d" % (self.board.captures_history[-1][BLACK]))
