@@ -1,12 +1,32 @@
 from __future__ import annotations
 
-from .minmax_node import MinMaxNode, retrieve_node_from_hashtable, \
-                         minmax_nodes_hashtable
 from .move import Move
-from .board import Board, print_board_performance
-from .masks import MASKS, Patterns, PatternsValue, masks_2
-from .constants import WHITE, BLACK
+from .board import Board
+from .constants import WHITE
 import time
+import numpy as np
+
+f_b = np.array([
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  2,  0,  1,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  2,  2,  2,  2,  2,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  2,  1,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+    [0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
+])
 
 class Maximilian():
     def prune(self, maximizing, best_score, child_score, best_child, child, alpha, beta):
@@ -30,22 +50,19 @@ class Maximilian():
                 
 
     def perform_minmax(self, board: Board, alpha, beta,
-                       previous_possible_moves, remaining_depth):
+                       remaining_depth):
         maximizing = not board.move_history[-1].color == WHITE
         
-        is_over = board.check_if_over(previous_possible_moves)
-        if remaining_depth == 0 or is_over:
-            best_score, _ = board.evaluate()
-            return None, best_score
+        if remaining_depth == 0 or board.check_if_over():
+            return None, board.score
         
-        possible_moves = board.get_possible_moves(previous_possible_moves)
+        possible_moves = board.get_possible_moves()
         # self.order_children_by_score()
         best_child = None
         best_score = float('-inf') if maximizing else float('inf')
         for possible_move in possible_moves:
             next_board = board.record_new_move(possible_move)
             _, child_score = self.perform_minmax(next_board, alpha, beta, 
-                                                 possible_moves.copy(),
                                                  remaining_depth - 1)
             prune, best_score, best_child, alpha, beta = self.prune(maximizing, best_score,
                                                                     child_score, best_child,
@@ -60,7 +77,6 @@ class Maximilian():
             board,
             float('-inf'),
             float('inf'),
-            None,
             3
         )
         return best_child

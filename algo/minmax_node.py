@@ -11,7 +11,7 @@ from functools import partial
 from .move import Move
 from .board import Board
 from .constants import WHITE, BLACK, PATTERN_SIZES
-from .masks import MASKS, Patterns, PatternsValue, masks_2
+from .masks import MASKS_WHITE, Patterns, PatternsValue, MASKS_BLACK
 
 minmax_nodes_hashtable = {}
 pattern_score_hashtable = {}

@@ -18,12 +18,8 @@ def parse_arguments():
     return parser.parse_args()
 
 def get_human_move(color):
-    while True:
-        try:
-            move_string = input("Where would you like to play?\n")
-            return Move(color, move_string)
-        except YouAreDumbException as e:
-            print(e)
+    move_string = input("Where would you like to play?\n")
+    return Move(color, move_string)
 
 def play_in_terminal(human_vs_maximilian):
     game = Game()
@@ -31,15 +27,20 @@ def play_in_terminal(human_vs_maximilian):
     load_hashtables()
     last_move = None
     while True:
-        move_human = get_human_move(last_move.opposite_color if last_move else BLACK)
-        last_move = move_human
-        game.record_new_move(move_human)
+        while True:
+            try:
+                move_human = get_human_move(last_move.opposite_color if last_move else BLACK)
+                game.record_new_move(move_human)
+                last_move = move_human
+                break
+            except YouAreDumbException:
+                pass
         game.dump()
         if game.is_over:
             print("It's over bitch.")
             break
         a = time.time()
-        move_maximilian = maximilian.get_next_move(game.board.copy())
+        move_maximilian = maximilian.get_next_move(game.board)
         b = time.time()
         print("Time: %f" % (b - a))
         if human_vs_maximilian:
