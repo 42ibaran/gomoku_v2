@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
-import time
 import pickle
+import time
 from hashlib import sha1
 from .move import Move
 from .constants import EMPTY, WHITE, BLACK, PATTERN_SIZES, \
-    EMPTY_CAPTURES_DICTIONARY
+                       EMPTY_CAPTURES_DICTIONARY
 from .errors import YouAreDumbException
 from .masks import MASKS_WHITE, Patterns, PatternsValue, MASKS_BLACK
 
@@ -25,12 +24,15 @@ PATTERN_MAIN_DIAG      = 0 + 19 + 19
 PATTERN_SECONDARY_DIAG = 0 + 19 + 19 + 37
 
 pattern_evaluation_hashtable = {}
+small_pattern_evaluation_hashtable = {}
 board_evaluation_hashtable = {}
+count = 0
+time_spent = 0
 
 class Board():
     __slots__ = ['matrix', 'move_history', 'possible_moves', 'patterns',
                  'score', 'is_five_in_a_row', 'captures_history', 'is_over',
-                 'previous_possible_moves', 'propogate_possible_moves',
+                 'previous_possible_moves', 'propagate_possible_moves',
                  'hash_value']
 
     def __init__(self):
@@ -40,7 +42,7 @@ class Board():
         self.patterns = [0] * ((19 + 37) * 2)
         self.possible_moves = None
         self.previous_possible_moves = None
-        self.propogate_possible_moves = True
+        self.propagate_possible_moves = True
         self.score = None
         self.hash_value = None
         self.is_five_in_a_row = None
@@ -94,7 +96,12 @@ class Board():
         self.captures_history.append(new_captures_state)
 
     def record_new_move(self, move: Move) -> Board:
+        global count, time_spent
+        a = time.time()
         new_board_state = self.copy()
+        b = time.time()
+        count += 1
+        time_spent += (b - a)
 
         if new_board_state.matrix[move.position] != EMPTY:
             raise YouAreDumbException("The cell is already taken you dum-dum.")
@@ -103,7 +110,7 @@ class Board():
         new_board_state.__update_patterns(move)
         new_board_state.__record_captures(move)
         new_board_state.evaluate()
-        
+
         return new_board_state
 
     def get_hash(self) -> str:
@@ -116,6 +123,9 @@ class Board():
         return self.hash_value
 
     def dump(self) -> None:
+        global time_spent, count
+        print("Copy time: %f, Calls: %d" % (time_spent, count))
+        time_spent = count = 0
         index_0_9 = range(10)
         index_10_18 = range(10, 19)
         print('   ' + '  '.join(map(str, index_0_9)) + ' ' + ' '.join(map(str, index_10_18)))
@@ -172,15 +182,10 @@ class Board():
 
         self.score = self.get_captures_score()
         self.is_five_in_a_row = False
-        for pattern, pattern_size in zip(self.patterns, PATTERN_SIZES):
-            hash_value = hash((pattern_size, pattern))
-            if hash_value in pattern_evaluation_hashtable:
-                pattern_score, pattern_is_five_in_a_row = pattern_evaluation_hashtable[hash_value]
-            else:
-                pattern_score, pattern_is_five_in_a_row = self.evaluate_pattern(pattern, pattern_size)
-                pattern_evaluation_hashtable[hash_value] = (pattern_score, pattern_is_five_in_a_row)
-            self.score += pattern_score
-            self.is_five_in_a_row = self.is_five_in_a_row if not pattern_is_five_in_a_row else True
+        for pattern_index, pattern in enumerate(self.patterns):
+            score, is_five_in_a_row = self.evaluate_pattern(pattern_index, pattern)
+            self.score += score
+            self.is_five_in_a_row = self.is_five_in_a_row if not is_five_in_a_row else True
         self.save_evaluation_result()
         return self.score, self.is_five_in_a_row
 
@@ -188,23 +193,42 @@ class Board():
         return PatternsValue[Patterns.CAPTURE] * \
             (self.captures_history[-1][WHITE] - self.captures_history[-1][BLACK])
 
-    def evaluate_pattern(self, pattern, pattern_size) -> tuple[int, bool]:
-        pattern_score = 0
-        pattern_is_five_in_a_row = False
-        while pattern != 0:
-            for mask_size, mask_dictionary in MASKS_WHITE.items():
-                small_pattern = pattern % 3**mask_size
-                if pattern_size < mask_size:
-                    continue
-                for pattern_code, masks in mask_dictionary.items():
-                    mask_occurrences_w = masks.count(small_pattern)
-                    mask_occurrences_b = MASKS_BLACK[mask_size][pattern_code].count(small_pattern)
-                    if pattern_code == Patterns.FIVE_IN_A_ROW and (mask_occurrences_w > 0 or mask_occurrences_b > 0):
-                        pattern_is_five_in_a_row = True
-                    pattern_score += PatternsValue[pattern_code] * (mask_occurrences_w - mask_occurrences_b)
-            pattern //= 3
-            pattern_size -= 1
-        return pattern_score, pattern_is_five_in_a_row
+    def evaluate_pattern(self, pattern_index, original_pattern):
+        score = 0
+        is_five_in_a_row = False
+        hash_value = hash((original_pattern, PATTERN_SIZES[pattern_index]))
+        if hash_value not in pattern_evaluation_hashtable:
+            for mask_size in MASKS_WHITE.keys():
+                pattern = original_pattern
+                pattern_size = PATTERN_SIZES[pattern_index]
+                while pattern != 0:
+                    if pattern_size < mask_size:
+                        break
+                    small_pattern = pattern % 3**mask_size
+                    small_score, small_is_five_in_a_row = self.evaluate_small_pattern(small_pattern, mask_size)
+                    score += small_score
+                    is_five_in_a_row = is_five_in_a_row if not small_is_five_in_a_row else True
+                    pattern //= 3
+                    pattern_size -= 1
+            pattern_evaluation_hashtable[hash_value] = (score, is_five_in_a_row)
+        score, is_five_in_a_row = pattern_evaluation_hashtable[hash_value]
+        return score, is_five_in_a_row
+
+    def evaluate_small_pattern(self, small_pattern, mask_size):
+        small_hash_value = hash((small_pattern, mask_size))
+        if small_hash_value in small_pattern_evaluation_hashtable:
+            score, is_five_in_a_row = small_pattern_evaluation_hashtable[small_hash_value]
+        else:
+            score = 0
+            is_five_in_a_row = False
+            for pattern_code in MASKS_WHITE[mask_size].keys():
+                total_occurrences = (small_pattern in MASKS_WHITE[mask_size][pattern_code]) - \
+                                    (small_pattern in MASKS_BLACK[mask_size][pattern_code])
+                score += PatternsValue[pattern_code] * total_occurrences
+                if pattern_code == Patterns.FIVE_IN_A_ROW and total_occurrences != 0:
+                    is_five_in_a_row = True
+            small_pattern_evaluation_hashtable[small_hash_value] = (score, is_five_in_a_row)
+        return score, is_five_in_a_row
 
     def save_evaluation_result(self):
         board_evaluation_hashtable[self.get_hash()] = (self.score, self.is_five_in_a_row)
@@ -224,7 +248,7 @@ class Board():
                 real_possible_moves.append(possible_move)
                 cant_be_undone = False
         self.possible_moves = real_possible_moves
-        self.propogate_possible_moves = False
+        self.propagate_possible_moves = False
         return cant_be_undone
 
     def copy(self):
@@ -233,7 +257,7 @@ class Board():
         new_board.move_history = self.move_history.copy()
         new_board.patterns = self.patterns.copy()
         new_board.captures_history = self.captures_history.copy()
-        if self.possible_moves is not None and self.propogate_possible_moves:
+        if self.possible_moves is not None and self.propagate_possible_moves:
             new_board.previous_possible_moves = self.possible_moves.copy()
         else:
             new_board.previous_possible_moves = None
@@ -241,11 +265,12 @@ class Board():
 
 
 def save_hashtables():
-    pickle.dump(pattern_evaluation_hashtable, open("pattern_score_hashtable.pickle", "wb"))
+    pickle.dump(pattern_evaluation_hashtable, open("pattern_evaluation_hashtable.pickle", "wb"))
+    pickle.dump(small_pattern_evaluation_hashtable, open("small_pattern_evaluation_hashtable.pickle", "wb"))
     pickle.dump(board_evaluation_hashtable, open("board_evaluation_hashtable.pickle", "wb"))
 
 def load_hashtables():
-    global pattern_evaluation_hashtable, board_evaluation_hashtable
+    global pattern_evaluation_hashtable, small_pattern_evaluation_hashtable, board_evaluation_hashtable
     try:
         pattern_evaluation_hashtable = pickle.load(open("pattern_evaluation_hashtable.pickle", "rb"))
     except FileNotFoundError:
@@ -256,4 +281,9 @@ def load_hashtables():
     except FileNotFoundError:
         print("Hmm, board_evaluation_hashtable pickle file not found?")
         board_evaluation_hashtable = {}
+    try:
+        small_pattern_evaluation_hashtable = pickle.load(open("small_pattern_evaluation_hashtable.pickle", "rb"))
+    except FileNotFoundError:
+        print("Hmm, small_pattern_evaluation_hashtable pickle file not found?")
+        small_pattern_evaluation_hashtable = {}
 

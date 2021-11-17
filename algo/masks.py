@@ -104,6 +104,7 @@ MASKS_WHITE = {
 MASKS_BLACK = {
     6: {
         Patterns.FREE_4: [
+            2,
             240
         ]
     },
