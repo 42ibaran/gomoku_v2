@@ -24,7 +24,7 @@ def get_human_move(color):
 def play_in_terminal(human_vs_maximilian):
     game = Game()
     maximilian = Maximilian()
-    load_hashtables()
+    # load_hashtables()
     last_move = None
     try:
         while True:
@@ -56,7 +56,7 @@ def play_in_terminal(human_vs_maximilian):
                 print("Suggested move: ", move_maximilian.position, sep="")
     except KeyboardInterrupt:
         pass
-    save_hashtables()
+    # save_hashtables()
     print("\nGood bye!")
     
 

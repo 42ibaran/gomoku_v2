@@ -33,12 +33,11 @@ class Maximilian():
         if remaining_depth == 0 or board.check_if_over():
             return None, board.score
 
-        # possible_moves = board.__get_possible_moves()
         ordered_possible_moves = board.order_children_by_score(maximizing)
         best_child = None
         best_score = float('-inf') if maximizing else float('inf')
         for possible_move in ordered_possible_moves:
-            next_board = board.record_new_move(possible_move)
+            next_board = board.record_new_move(possible_move, board.move.opposite_color)
             _, child_score = self.perform_minmax(next_board, alpha, beta,
                                                  remaining_depth - 1)
             prune, best_score, best_child, alpha, beta = self.prune(maximizing, best_score,
@@ -47,7 +46,7 @@ class Maximilian():
             if prune:
                 break
 
-        return best_child, best_score
+        return Move(board.move.opposite_color, best_child), best_score
 
     def get_next_move(self, board: Board, depth=5) -> Move:
         best_child, _ = self.perform_minmax(

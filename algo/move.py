@@ -19,7 +19,7 @@ class Move():
         self.position = position
         self.previous_color = previous_color
         self.opposite_color = self.__get_opposite_color()
-        self.captures = []
+        self.captures = set()
 
     def __get_opposite_color(self):
         if self.color == EMPTY:
