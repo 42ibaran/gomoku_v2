@@ -30,20 +30,20 @@ count = 0
 time_spent = 0
 
 class Board():
-    __slots__ = ['matrix', 'move_history', 'possible_moves', 'patterns',
-                 'score', 'is_five_in_a_row', 'captures_history', 'is_over',
-                 'previous_possible_moves', 'propagate_possible_moves',
-                 'hash_value', 'move', 'captures']
+    __slots__ = ['matrix', 'possible_moves', 'patterns',
+                 'score', 'is_five_in_a_row',
+                 'propagate_possible_moves',
+                 'hash_value', 'move', 'captures', 'patterns_scores']
 
     def __init__(self):
         self.matrix = np.zeros((19, 19), dtype=int)
         self.move = None
         self.captures = EMPTY_CAPTURES_DICTIONARY
         self.patterns = [0] * ((19 + 37) * 2)
+        self.patterns_scores = [(0, False)] * ((19 + 37) * 2)
         self.possible_moves = None
-        self.previous_possible_moves = None
         self.propagate_possible_moves = True
-        self.score = None
+        self.score = 0
         self.hash_value = None
         self.is_five_in_a_row = None
 
@@ -74,10 +74,30 @@ class Board():
         main_diagonal_power = 18 - max(x, y)
         secondary_diagonal_power = 18 - max(18 - y, x)
 
-        self.patterns[PATTERN_ROW + y] += color * (3 ** (18 - x))
-        self.patterns[PATTERN_COLUMN + x] += color * (3 ** (18 - y))
-        self.patterns[PATTERN_MAIN_DIAG + 18 + x - y] += color * (3 ** main_diagonal_power)
-        self.patterns[PATTERN_SECONDARY_DIAG + x + y] += color * (3 ** secondary_diagonal_power)
+        row_i = PATTERN_ROW + y
+        column_i = PATTERN_COLUMN + x
+        main_diag_i = PATTERN_MAIN_DIAG + 18 + x - y
+        secondary_diag_i = PATTERN_SECONDARY_DIAG + x + y
+
+        self.score -= (self.patterns_scores[row_i][0] + \
+                       self.patterns_scores[column_i][0] + \
+                       self.patterns_scores[main_diag_i][0] + \
+                       self.patterns_scores[secondary_diag_i][0])
+
+        self.patterns[row_i] += color * (3 ** (18 - x))
+        self.patterns[column_i] += color * (3 ** (18 - y))
+        self.patterns[main_diag_i] += color * (3 ** main_diagonal_power)
+        self.patterns[secondary_diag_i] += color * (3 ** secondary_diagonal_power)
+
+        self.patterns_scores[row_i] = self.evaluate_pattern(row_i, self.patterns[row_i])
+        self.patterns_scores[column_i] = self.evaluate_pattern(column_i, self.patterns[column_i])
+        self.patterns_scores[main_diag_i] = self.evaluate_pattern(main_diag_i, self.patterns[main_diag_i])
+        self.patterns_scores[secondary_diag_i] = self.evaluate_pattern(secondary_diag_i, self.patterns[secondary_diag_i])
+
+        self.score += (self.patterns_scores[row_i][0] + \
+                       self.patterns_scores[column_i][0] + \
+                       self.patterns_scores[main_diag_i][0] + \
+                       self.patterns_scores[secondary_diag_i][0])
 
     def __record_captures(self, move: Move) -> int:
         capture_directions = self.__find_captures(move)
@@ -91,24 +111,25 @@ class Board():
             self.matrix[capture_move_2.position] = EMPTY
             self.__update_patterns(capture_move_1)
             self.__update_patterns(capture_move_2)
-        self.captures[self.move.color] += len(capture_directions)
+        self.captures[move.color] += len(capture_directions)
 
     def record_new_move(self, move: Move) -> Board:
-        # global count, time_spent
-        # a = time.time()
+        global count, time_spent
         new_board_state = self.copy()
-        # b = time.time()
-        # count += 1
-        # time_spent += (b - a)
 
         if new_board_state.matrix[move.position] != EMPTY:
             raise YouAreDumbException("The cell is already taken you dum-dum.")
         new_board_state.matrix[move.position] = move.color
         new_board_state.move = move
-        # new_board_state.move_history.append(move)
         new_board_state.__update_patterns(move)
         new_board_state.__record_captures(move)
+        new_board_state.__get_possible_moves(self.possible_moves if self.propagate_possible_moves else None)
+
+        a = time.time()
         new_board_state.evaluate()
+        b = time.time()
+        count += 1
+        time_spent += (b - a)
 
         return new_board_state
 
@@ -138,27 +159,28 @@ class Board():
                 print(stone, end='  ')
             print()
 
-    def get_possible_moves(self) -> list[Move]:
-        if self.possible_moves is not None:
-            return self.possible_moves
+    def __get_possible_moves(self, previous_possible_moves) -> None:
         color = self.move.opposite_color
-        if self.previous_possible_moves:
-            self.previous_possible_moves.remove(self.move)
+        if previous_possible_moves:
             i, j = self.move.position
             possible_moves = self.get_possible_moves_for_position(i, j)
-            for old_possible_move in self.previous_possible_moves:
-                possible_moves.add(old_possible_move.position)
-            for capture in self.move.captures:
-                possible_moves.add(capture.position)
+            possible_moves = possible_moves.union(
+                [capture.position for capture in self.move.captures] + \
+                [old_possible_move.position for old_possible_move in previous_possible_moves]
+            )
+            possible_moves.remove(self.move.position)
         else:
-            possible_moves = set()
             full_cells_indices = np.transpose(self.matrix.nonzero())
-            for full_cell_index in full_cells_indices:
-                i, j = tuple(full_cell_index)
-                possible_moves_for_position = self.get_possible_moves_for_position(i, j)
-                possible_moves = possible_moves.union(possible_moves_for_position)
+            list_of_sets_of_positions = [ self.get_possible_moves_for_position(i, j) for i, j in full_cells_indices ]
+            possible_moves = set().union(*list_of_sets_of_positions)
         self.possible_moves = list(map(lambda possible_move: Move(color, possible_move), possible_moves))
-        return self.possible_moves
+
+    def order_children_by_score(self, maximizing):
+        possible_move_scores = {}
+        for possible_move in self.possible_moves:
+            new_state = self.record_new_move(possible_move)
+            possible_move_scores[possible_move] = new_state.score
+        return [key for key, _ in sorted(possible_move_scores.items(), key=lambda x: x[1], reverse=maximizing)]
 
     def get_possible_moves_for_position(self, i: int, j: int) -> set[tuple[int]]:
         possible_moves = set()
@@ -173,20 +195,11 @@ class Board():
         return possible_moves
 
     def evaluate(self) -> tuple[int, bool]:
-        if self.score is not None and self.is_five_in_a_row is not None:
-            return self.score, self.is_five_in_a_row
         if self.get_hash() in board_evaluation_hashtable:
-            self.score, self.is_five_in_a_row = board_evaluation_hashtable[self.get_hash()]
-            return self.score, self.is_five_in_a_row
-
-        self.score = self.get_captures_score()
-        self.is_five_in_a_row = False
-        for pattern_index, pattern in enumerate(self.patterns):
-            score, is_five_in_a_row = self.evaluate_pattern(pattern_index, pattern)
-            self.score += score
-            self.is_five_in_a_row = self.is_five_in_a_row if not is_five_in_a_row else True
+            _, self.is_five_in_a_row = board_evaluation_hashtable[self.get_hash()]
+            return
+        self.is_five_in_a_row = any([is_five_in_a_row for _, is_five_in_a_row in self.patterns_scores])
         self.save_evaluation_result()
-        return self.score, self.is_five_in_a_row
 
     def get_captures_score(self):
         return PatternsValue[Patterns.CAPTURE] * \
@@ -238,10 +251,9 @@ class Board():
             return True
         if not self.is_five_in_a_row:
             return False
-        possible_moves = self.get_possible_moves()
         cant_be_undone = True
         real_possible_moves = []
-        for possible_move in possible_moves:
+        for possible_move in self.possible_moves:
             new_state = self.record_new_move(possible_move)
             if not new_state.is_five_in_a_row:
                 real_possible_moves.append(possible_move)
@@ -254,13 +266,9 @@ class Board():
         new_board = Board()
         new_board.matrix = self.matrix.copy()
         new_board.captures = self.captures.copy()
-        # new_board.move_history = self.move_history.copy()
+        new_board.score = self.score
         new_board.patterns = self.patterns.copy()
-        # new_board.captures_history = self.captures_history.copy()
-        if self.possible_moves is not None and self.propagate_possible_moves:
-            new_board.previous_possible_moves = self.possible_moves.copy()
-        else:
-            new_board.previous_possible_moves = None
+        new_board.patterns_scores = self.patterns_scores.copy()
         return new_board
 
 

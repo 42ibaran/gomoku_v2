@@ -12,11 +12,11 @@ if __name__ == "__main__":
         for i in range(19):
             for j in range(19):
                 game = Game()
-                print(10, i, j, color)
+                print(5, i, j, color)
                 cheating_move = Move(color, (i, j))
                 captures_count = game.record_new_move(cheating_move)
                 a = time.time()
-                maximilian.get_next_move(game.board, 10)
+                maximilian.get_next_move(game.board, 5)
                 b = time.time()
                 print("Time: %f" % (b - a))
                     # game.captures[cheating_move.color] -= captures_count
