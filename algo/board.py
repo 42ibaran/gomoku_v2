@@ -94,18 +94,12 @@ class Board():
         self.captures[self.move.color] += len(capture_directions)
 
     def record_new_move(self, move: Move) -> Board:
-        # global count, time_spent
-        # a = time.time()
         new_board_state = self.copy()
-        # b = time.time()
-        # count += 1
-        # time_spent += (b - a)
 
         if new_board_state.matrix[move.position] != EMPTY:
             raise YouAreDumbException("The cell is already taken you dum-dum.")
         new_board_state.matrix[move.position] = move.color
         new_board_state.move = move
-        # new_board_state.move_history.append(move)
         new_board_state.__update_patterns(move)
         new_board_state.__record_captures(move)
         new_board_state.evaluate()
@@ -123,10 +117,10 @@ class Board():
 
     def dump(self) -> None:
         global time_spent, count
-        print("Copy time: %f, Calls: %d" % (time_spent, count))
         time_spent = count = 0
         index_0_9 = range(10)
         index_10_18 = range(10, 19)
+        print("")
         print('   ' + '  '.join(map(str, index_0_9)) + ' ' + ' '.join(map(str, index_10_18)))
         for index, row in enumerate(self.matrix):
             print(index, end=' ' * (1 if index >= 10 else 2))
@@ -142,7 +136,7 @@ class Board():
         if self.possible_moves is not None:
             return self.possible_moves
         color = self.move.opposite_color
-        if self.previous_possible_moves:
+        if self.previous_possible_moves and self.move in self.previous_possible_moves:
             self.previous_possible_moves.remove(self.move)
             i, j = self.move.position
             possible_moves = self.get_possible_moves_for_position(i, j)
