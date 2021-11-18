@@ -58,11 +58,13 @@ class Maximilian():
         moves = [key for key, _ in sorted(possible_move_scores.items(), key=lambda x: x[1], reverse=maximizing)]
         return moves
 
-    def get_next_move(self, board: Board, depth=5) -> Move:
+    def get_next_move(self, board: Board, depth=3) -> (Move, float):
+        a = time.time()
         best_child, _ = self.perform_minmax(
             board,
             float('-inf'),
             float('inf'),
             depth
         )
-        return best_child
+        b = time.time()
+        return best_child, (b - a)
