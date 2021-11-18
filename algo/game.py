@@ -15,5 +15,5 @@ class Game():
     def dump(self):
         self.board.dump()
         # print(self.board.patterns)
-        print("White captures: %d" % (self.board.captures_history[-1][WHITE]))
-        print("Black captures: %d" % (self.board.captures_history[-1][BLACK]))
+        print("White captures: %d" % (self.board.captures[WHITE]))
+        print("Black captures: %d" % (self.board.captures[BLACK]))

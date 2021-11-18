@@ -28,13 +28,13 @@ class Maximilian():
 
     def perform_minmax(self, board: Board, alpha, beta,
                        remaining_depth):
-        maximizing = not board.move_history[-1].color == WHITE
+        maximizing = not board.move.color == WHITE
 
         if remaining_depth == 0 or board.check_if_over():
             return None, board.score
 
         possible_moves = board.get_possible_moves()
-        possible_moves = self.order_children_by_score(board, possible_moves, maximizing)
+        # possible_moves = self.order_children_by_score(board, possible_moves, maximizing)
         best_child = None
         best_score = float('-inf') if maximizing else float('inf')
         for possible_move in possible_moves:
@@ -58,7 +58,7 @@ class Maximilian():
         moves = [key for key, _ in sorted(possible_move_scores.items(), key=lambda x: x[1], reverse=maximizing)]
         return moves
 
-    def get_next_move(self, board: Board, depth=3) -> Move:
+    def get_next_move(self, board: Board, depth=5) -> Move:
         best_child, _ = self.perform_minmax(
             board,
             float('-inf'),
