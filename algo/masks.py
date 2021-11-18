@@ -33,7 +33,25 @@ PatternsValue = {
     Patterns.BLOCK_FIVE_IN_A_ROW      : 100000000000,
 }
 
-MASKS = {
+# Patterns.BLOCK_FIVE_IN_A_ROW:[
+#     0xa1,   # XOOOO
+#     0xd7,   # OXOOO
+#     0xe9,   # OOXOO
+#     0xef,   # OOOXO
+#     0xf1,   # OOOOX
+# ],
+# Patterns.BLOCK_AX_DEVELOPING_TO_4: [
+#     0x9f,   # XOOO.
+#     0xd5,   # OXOO.
+#     0xe7,   # OOXO.
+#     0xed,   # OOOX.
+#     0x35,   # .XOOO
+#     0x47,   # .OXOO
+#     0x4d,   # .OOXO
+#     0x4f,   # .OOOX
+# ],
+
+MASKS_WHITE = {
     6: {
         Patterns.FREE_4: [
             0x78,   # .XXXX.
@@ -43,13 +61,6 @@ MASKS = {
         Patterns.FIVE_IN_A_ROW: [
             0x79,   # XXXXX
         ],
-        # Patterns.BLOCK_FIVE_IN_A_ROW:[
-        #     0xa1,   # XOOOO
-        #     0xd7,   # OXOOO
-        #     0xe9,   # OOXOO
-        #     0xef,   # OOOXO
-        #     0xf1,   # OOOOX
-        # ],
         Patterns.AX_DEVELOPING_TO_4: [
             0x28,   # .XXXX
             0x5e,   # X.XXX
@@ -57,16 +68,6 @@ MASKS = {
             0x76,   # XXX.X
             0x78,   # XXXX.
         ],
-        # Patterns.BLOCK_AX_DEVELOPING_TO_4: [
-        #     0x9f,   # XOOO.
-        #     0xd5,   # OXOO.
-        #     0xe7,   # OOXO.
-        #     0xed,   # OOOX.
-        #     0x35,   # .XOOO
-        #     0x47,   # .OXOO
-        #     0x4d,   # .OOXO
-        #     0x4f,   # .OOOX
-        # ],
         Patterns.AX_DEVELOPING_TO_3: [
             0x75,   # XXX..
             0x27,   # .XXX.
@@ -94,24 +95,66 @@ MASKS = {
     },
     4: {
         Patterns.POTENTIAL_CAPTURE: [
-            0x19,   # .OOX
-            0x33    # XOO.
+            0x19,   # .OOX # .XXO
+            0x33    # XOO. # OXX.
         ]
     }
 }
 
-masks_2 = {}
-
-for mask_length, mask_dictionary in MASKS.items():
-    masks_2[mask_length] = {}
-    for pattern_code, masks in mask_dictionary.items():
-        masks_2[mask_length][pattern_code] = [2*mask for mask in masks]
-
-
-BLOCKING_PATTERN_CODE_CONVERTION = {
-    Patterns.AX_DEVELOPING_TO_2 : Patterns.BLOCK_AX_DEVELOPING_TO_2,
-    Patterns.AX_DEVELOPING_TO_3 : Patterns.BLOCK_AX_DEVELOPING_TO_3,
-    Patterns.AX_DEVELOPING_TO_4 : Patterns.BLOCK_AX_DEVELOPING_TO_4,
-    Patterns.FREE_4             : Patterns.BLOCK_FREE_4,
-    Patterns.FIVE_IN_A_ROW      : Patterns.BLOCK_FIVE_IN_A_ROW,
+MASKS_BLACK = {
+    6: {
+        Patterns.FREE_4: [
+            240
+        ]
+    },
+    5: {
+        Patterns.FIVE_IN_A_ROW: [
+            242,
+        ], 
+        Patterns.AX_DEVELOPING_TO_4: [
+            80,
+            188,
+            224,
+            236,
+            240
+        ], 
+        Patterns.AX_DEVELOPING_TO_3: [
+            234,
+            78,
+            26,
+            222,
+            74,
+            186,
+            62,
+            218,
+            182,
+            170,
+        ],    
+        Patterns.AX_DEVELOPING_TO_2: [
+            216,
+            72,
+            24,
+            8,
+            180,
+            60,
+            20,
+            168,
+            56,
+            164,
+        ]
+    },
+    4: {
+        Patterns.POTENTIAL_CAPTURE: [
+            0xe,
+            0x42,
+        ]
+    }
 }
+
+# BLOCKING_PATTERN_CODE_CONVERTION = {
+#     Patterns.AX_DEVELOPING_TO_2 : Patterns.BLOCK_AX_DEVELOPING_TO_2,
+#     Patterns.AX_DEVELOPING_TO_3 : Patterns.BLOCK_AX_DEVELOPING_TO_3,
+#     Patterns.AX_DEVELOPING_TO_4 : Patterns.BLOCK_AX_DEVELOPING_TO_4,
+#     Patterns.FREE_4             : Patterns.BLOCK_FREE_4,
+#     Patterns.FIVE_IN_A_ROW      : Patterns.BLOCK_FIVE_IN_A_ROW,
+# }

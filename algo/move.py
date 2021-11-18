@@ -6,7 +6,8 @@ from .errors import YouAreDumbException
 REGEX_MOVE_STRING = r'^([0-9]|1[0-8]) ([0-9]|1[0-8])$'
 
 class Move():
-    __slots__ = ['position', 'color', 'previous_color', 'opposite_color']
+    __slots__ = ['position', 'color', 'previous_color', 'opposite_color',
+                 'captures']
     def __init__(self, color: int, position: Union[tuple[int], str],
                  previous_color: int = EMPTY):
         if type(position) == str:
@@ -18,6 +19,7 @@ class Move():
         self.position = position
         self.previous_color = previous_color
         self.opposite_color = self.__get_opposite_color()
+        self.captures = []
 
     def __get_opposite_color(self):
         if self.color == EMPTY:

@@ -1,64 +1,68 @@
 from __future__ import annotations
 
-from .minmax_node import MinMaxNode, retrieve_node_from_hashtable, \
-                         minmax_nodes_hashtable
 from .move import Move
-from .board import Board, print_board_performance
-from .masks import MASKS, Patterns, PatternsValue, masks_2
-from .constants import WHITE, BLACK
+from .board import Board
+from .constants import WHITE
 import time
+import numpy as np
 
 class Maximilian():
-    def perform_minmax(self, board: Board, last_move, captures, alpha, beta,
-                       maximizing, previous_possible_moves, remaining_depth):
-        score = PatternsValue[Patterns.CAPTURE] * (captures[WHITE] - captures[BLACK])
-        evaluation_result = board.evaluate()
-        score += evaluation_result[0]
-        # game_over = evaluation_result[1]
-        if remaining_depth == 0 or \
-                captures[WHITE] >= 10 or \
-                captures[BLACK] >= 10 or \
-                board.check_if_over(last_move):
-            return None, score
-        
-        score = float('-inf') if maximizing else float('inf')
-        possible_moves = board.get_possible_moves(previous_possible_moves, last_move)
-        # self.order_children_by_score()
+    def prune(self, maximizing, best_score, child_score, best_child, child, alpha, beta):
+        prune = False
+
+        if maximizing:
+            if child_score > best_score:
+                best_child = child
+            best_score = max(best_score, child_score)
+            alpha = max(alpha, child_score)
+            if beta <= alpha:
+                prune = True
+        else:
+            if child_score < best_score:
+                best_child = child
+            best_score = min(best_score, child_score)
+            beta = min(beta, child_score)
+            if beta <= alpha:
+                prune = True
+        return prune, best_score, best_child, alpha, beta
+
+    def perform_minmax(self, board: Board, alpha, beta,
+                       remaining_depth):
+        maximizing = not board.move.color == WHITE
+
+        if remaining_depth == 0 or board.check_if_over():
+            return None, board.score
+
+        possible_moves = board.get_possible_moves()
+        # possible_moves = self.order_children_by_score(board, possible_moves, maximizing)
         best_child = None
+        best_score = float('-inf') if maximizing else float('inf')
         for possible_move in possible_moves:
-            captures_count = board.record_new_move(possible_move)
-            child_captures = captures.copy()
-            child_captures[possible_move.color] += captures_count
-
-            _, child_score = self.perform_minmax(board.copy(), possible_move, child_captures, 
-                                                 alpha, beta, not maximizing, possible_moves.copy(),
+            next_board = board.record_new_move(possible_move)
+            _, child_score = self.perform_minmax(next_board, alpha, beta,
                                                  remaining_depth - 1)
-            board.undo_move()
-            if maximizing:
-                if child_score > score:
-                    best_child = possible_move
-                score = max(score, child_score)
-                alpha = max(alpha, child_score)
-                if beta <= alpha:
-                    break
-            else:
-                if child_score < score:
-                    best_child = possible_move
-                score = min(score, child_score)
-                beta = min(beta, child_score)
-                if beta <= alpha:
-                    break
-        return best_child, score
+            prune, best_score, best_child, alpha, beta = self.prune(maximizing, best_score,
+                                                                    child_score, best_child,
+                                                                    possible_move, alpha, beta)
+            if prune:
+                break
 
-    def get_next_move(self, board: Board, last_move: Move, captures: dict) -> Move:
+        return best_child, best_score
+
+    @staticmethod
+    def order_children_by_score(board: Board, possible_moves, maximizing):
+        possible_move_scores = {}
+        for possible_move in possible_moves:
+            new_state = board.record_new_move(possible_move)
+            possible_move_scores[possible_move] = new_state.score
+        moves = [key for key, _ in sorted(possible_move_scores.items(), key=lambda x: x[1], reverse=maximizing)]
+        return moves
+
+    def get_next_move(self, board: Board, depth=5) -> Move:
         best_child, _ = self.perform_minmax(
-            board.copy(),
-            last_move,
-            captures.copy(),
+            board,
             float('-inf'),
             float('inf'),
-            False if last_move.color == WHITE else True,
-            None,
-            3
+            depth
         )
         return best_child
