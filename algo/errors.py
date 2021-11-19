@@ -1,2 +1,2 @@
-class YouAreDumbException(Exception):
+class ForbiddenMoveError(Exception):
     pass

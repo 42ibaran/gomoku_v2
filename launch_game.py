@@ -6,7 +6,7 @@ from algo.board import load_hashtables, save_hashtables
 from algo.game import Game
 from algo.move import Move
 from algo.constants import WHITE, BLACK
-from algo.errors import YouAreDumbException
+from algo.errors import ForbiddenMoveError
 
 
 def parse_arguments():
@@ -34,8 +34,8 @@ def play_in_terminal(human_vs_maximilian):
                     game.record_new_move(move_human)
                     last_move = move_human
                     break
-                except YouAreDumbException:
-                    pass
+                except (ForbiddenMoveError, ValueError) as e:
+                    print(e)
             game.dump()
             if game.is_over:
                 print("It's over bitch.")
@@ -55,9 +55,10 @@ def play_in_terminal(human_vs_maximilian):
             else:
                 print("Suggested move: ", move_maximilian.position, sep="")
     except KeyboardInterrupt:
+        print()
         pass
     # save_hashtables()
-    print("\nGood bye!")
+    print("Good bye!")
     
 
 if __name__ == "__main__":
