@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .move import Move
 from .board import Board
-from .constants import WHITE
+from .constants import WHITE, BLACK
 import time
 import numpy as np
 
@@ -59,6 +59,8 @@ class Maximilian():
         return moves
 
     def get_next_move(self, board: Board, depth=3) -> (Move, float):
+        if not board.move:
+            return Move(BLACK, "9 9"), 0.0
         a = time.time()
         best_child, _ = self.perform_minmax(
             board,
