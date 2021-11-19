@@ -95,9 +95,6 @@ class Board():
 
     def record_new_move(self, move: Move) -> Board:
         new_board_state = self.copy()
-
-        if new_board_state.matrix[move.position] != EMPTY:
-            raise YouAreDumbException("The cell is already taken you dum-dum.")
         new_board_state.matrix[move.position] = move.color
         new_board_state.move = move
         new_board_state.__update_patterns(move)
@@ -126,7 +123,7 @@ class Board():
             print(index, end=' ' * (1 if index >= 10 else 2))
             for element in row:
                 if element == EMPTY:
-                    stone = '+'
+                    stone = '·'
                 else:
                     stone = '○' if element == BLACK else '●'
                 print(stone, end='  ')
