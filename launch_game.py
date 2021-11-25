@@ -48,6 +48,7 @@ def play_in_terminal(human_vs_maximilian):
             b = time.time()
             print("Time: %f" % (b - a))
             if human_vs_maximilian:
+                print(move_maximilian.position)
                 game.record_new_move(move_maximilian)
                 game.dump()
                 last_move = move_maximilian

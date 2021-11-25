@@ -36,10 +36,10 @@ def perform_minmax(board: Board, alpha, beta,
     best_score = float('-inf') if maximizing else float('inf')
     for possible_move, next_board in board.order_children_by_score(maximizing):
         _, child_score = perform_minmax(next_board, alpha, beta,
-                                                remaining_depth - 1)
+                                        remaining_depth - 1)
         is_prune, best_score, best_child, alpha, beta = prune(maximizing, best_score,
-                                                                child_score, best_child,
-                                                                possible_move, alpha, beta)
+                                                              child_score, best_child,
+                                                              possible_move, alpha, beta)
         if is_prune:
             break
 
