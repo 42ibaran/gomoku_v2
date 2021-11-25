@@ -8,8 +8,8 @@ from .move import Move
 from .constants import EMPTY, WHITE, BLACK, PATTERN_SIZES, \
                        EMPTY_CAPTURES_DICTIONARY
 from .errors import ForbiddenMoveError, ForbiddenMoveError
-from .masks import Patterns, PatternsValue, MASKS
-import functools
+from .masks import Patterns, PatternsValue, MASKS_WHITE, MASKS_BLACK
+# import functools
 
 # Patterns list explanation:
 #   First 19 numbers represent rows of the matrix
@@ -39,22 +39,27 @@ union_manipulation_time = 0
 
 class Board():
     __slots__ = ['matrix', 'possible_moves', 'patterns',
-                 'score', 'is_five_in_a_row',
-                 'propagate_possible_moves',
-                 'hash_value', 'move', 'captures', 'patterns_scores', 'patterns_firs']
+                 'score', 'is_five_in_a_row', 'propagate_possible_moves',
+                 'hash_value', 'move', 'captures', 'stats']
 
     def __init__(self, empty=True):
         if not empty:
             self.matrix = np.zeros((19, 19), dtype=int)
             self.move = None
             self.captures = EMPTY_CAPTURES_DICTIONARY
-            # self.patterns = [0] * ((19 + 37) * 2)
-            self.patterns = {
-                WHITE: [0] * ((19 + 37) * 2),
-                BLACK: [0] * ((19 + 37) * 2),
+            self.patterns = [0] * ((19 + 37) * 2)
+            self.stats = {
+                WHITE: {
+                    'scores': [0] * ((19 + 37) * 2),
+                    'five_in_a_rows': [False] * ((19 + 37) * 2),
+                    'free_threes': [False] * ((19 + 37) * 2),
+                },
+                BLACK: {
+                    'scores': [0] * ((19 + 37) * 2),
+                    'five_in_a_rows': [False] * ((19 + 37) * 2),
+                    'free_threes': [False] * ((19 + 37) * 2),
+                }
             }
-            self.patterns_scores = [0] * ((19 + 37) * 2)
-            self.patterns_firs = [False] * ((19 + 37) * 2)
             self.possible_moves = None
             self.score = 0
             self.is_five_in_a_row = None
@@ -93,42 +98,49 @@ class Board():
     def __update_patterns(self, move: Move) -> None:
         y, x = move.position
 
-        color = move.color
-        multiplicator = 1
+        undo = False
         if move.color == EMPTY:
+            undo = True
             color = move.previous_color
-            multiplicator = -1
-
-        #     color = move.previous_color
-        # else:
-        #     color = move.color
+        else:
+            color = move.color
+        color = -color if undo else color
 
         for index, place in self.__get_pattern_indices_and_places_for_position(y, x):
-            self.patterns[color][index] += multiplicator * 2 ** place
+            self.patterns[index] += color * (3 ** place)
             self.evaluate_pattern(index)
         
-        self.score = sum(self.patterns_scores)
-
     def evaluate_pattern(self, index):
-        score = 0
-        self.patterns_firs[index] = False
-        for color in [WHITE, BLACK]:
-            pattern = self.patterns[color][index]
-            multiplicator = (1 if color == WHITE else -1)
-            while pattern != 0:
-                for pattern_code, mask in MASKS.items():
-                    if pattern & mask == mask:
-                        if pattern_code == Patterns.FIVE_IN_A_ROW:
-                            self.patterns_firs[index] = True
-                        score += multiplicator * PatternsValue[pattern_code]
-                pattern = pattern >> 1
-        self.patterns_scores[index] = score
+        self.stats[WHITE]['scores'][index] = self.stats[BLACK]['scores'][index] = 0
+        pattern = self.patterns[index]
+        pattern_size = PATTERN_SIZES[index]
+        while pattern != 0:
+            for (mask_size, masks_w), masks_b in zip(MASKS_WHITE.items(), MASKS_BLACK.values()):
+                if pattern_size < mask_size:
+                    continue
+                small_pattern = pattern % (3 ** mask_size)
+                if small_pattern != 0:
+                    for (pattern_code, masks_list_w), masks_list_b in zip(masks_w.items(), masks_b.values()):
+                        total_occ = (small_pattern in masks_list_w) - \
+                                    (small_pattern in masks_list_b)
+                        if total_occ != 0:
+                            color = BLACK if total_occ < 0 else WHITE
+                            self.stats[color]['scores'][index] += total_occ * PatternsValue[pattern_code]
+                            if pattern_code == Patterns.FIVE_IN_A_ROW:
+                                self.stats[color]['five_in_a_rows'][index] = True
+                            if pattern_code == Patterns.AX_DEVELOPING_TO_3:
+                                self.stats[color]['free_threes'][index] = True
+            pattern //= 3
+            pattern_size -= 1
+
 
     def evaluate(self) -> tuple[int, bool]:
         # if self.get_hash() in board_evaluation_hashtable:
         #     _, self.is_five_in_a_row = board_evaluation_hashtable[self.get_hash()]
         #     return
-        self.is_five_in_a_row = any(self.patterns_firs)
+        self.score = sum(self.stats[WHITE]['scores'] + self.stats[BLACK]['scores'])
+        self.is_five_in_a_row = any(self.stats[WHITE]['five_in_a_rows'] + self.stats[BLACK]['five_in_a_rows'])
+        
         # self.save_evaluation_result()
 
     def get_captures_score(self):
@@ -178,14 +190,6 @@ class Board():
         global count, total_time, copy_time, matrix_time, \
             patterns_time, possible_moves_time, evaluate_time, \
             get_pos_for_pos, union_manipulation_time
-        print("New move time: %f, calls: %d" % (total_time, count))
-        # print("Copy time: %f" % (copy_time))
-        # print("Matrix time: %f" % (matrix_time))
-        print("Patterns time: %f" % (patterns_time))
-        print("Possible moves time: %f" % (possible_moves_time))
-        # print("Evaluate time: %f" % (evaluate_time))
-        # print("PosPos time: %f" % (get_pos_for_pos))
-        print("Union time: %f" % (union_manipulation_time))
         total_time = copy_time = matrix_time = patterns_time = \
             possible_moves_time = evaluate_time = count = \
             get_pos_for_pos = union_manipulation_time = 0
@@ -276,8 +280,18 @@ class Board():
         new_board.captures = self.captures.copy()
         new_board.score = self.score
         new_board.patterns = self.patterns.copy()
-        new_board.patterns_scores = self.patterns_scores.copy()
-        new_board.patterns_firs = self.patterns_firs.copy()
+        new_board.stats = {
+            WHITE: {
+                'scores': self.stats[WHITE]['scores'].copy(),
+                'five_in_a_rows': self.stats[WHITE]['five_in_a_rows'].copy(),
+                'free_threes': self.stats[WHITE]['free_threes'].copy(),
+            },
+            BLACK: {
+                'scores': self.stats[BLACK]['scores'].copy(),
+                'five_in_a_rows': self.stats[BLACK]['five_in_a_rows'].copy(),
+                'free_threes': self.stats[BLACK]['free_threes'].copy(),
+            }
+        }
         return new_board
 
 
