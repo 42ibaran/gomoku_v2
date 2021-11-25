@@ -228,36 +228,18 @@ class Board():
             print()
 
     def order_children_by_score(self, maximizing):
-        queue = Queue()
-        processes = [Process(target=self.create_child, args=(possible_move, queue)) for possible_move in self.possible_moves]
-
-        for process in processes:
-            process.daemon = False
-            process.start()
-
-        forbidden_moves = set()
         children = {}
-        while len(children.keys()) + len(forbidden_moves) != len(self.possible_moves):
-            child, forbidden_move = queue.get()
-            # input()
-            if child is not None:
-                children[child.move.position] = child
-            else:
-                forbidden_moves.add(forbidden_move)
+        forbidden_moves = set()
+        for possible_move in self.possible_moves:
+            try:
+                child = self.record_new_move(possible_move, self.move.opposite_color)
+                children[possible_move] = child
+            except ForbiddenMoveError:
+                forbidden_moves.add(possible_move)
         self.possible_moves -= forbidden_moves
-
-        for process in processes:
-            process.join()
 
         for move, child in sorted(children.items(), key=lambda item: item[1].score, reverse=maximizing):
             yield move, child
-
-    def create_child(self, possible_move, queue):
-        try:
-            child = self.record_new_move(possible_move, self.move.opposite_color)
-            queue.put((child, None))
-        except ForbiddenMoveError:
-            queue.put((None, possible_move))
 
     def __get_possible_moves(self, previous_possible_moves) -> None:
         global union_manipulation_time
