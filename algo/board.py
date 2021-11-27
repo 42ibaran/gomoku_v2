@@ -182,9 +182,6 @@ class Board():
         else:
             new_board_state = self.actually_record_new_move(position, color)
 
-        if new_board_state.double_three:
-            raise ForbiddenMoveError("Double free-three.")
-
         return new_board_state
 
     def actually_record_new_move(self, position, color):
@@ -195,6 +192,10 @@ class Board():
         new_board_state.move = Move(color, position)
         new_board_state.__record_captures(new_board_state.move)
         new_board_state.__update_patterns(new_board_state.move)
+
+        if new_board_state.double_three:
+            raise ForbiddenMoveError("Double free-three.")
+
         new_board_state.__get_possible_moves(self.possible_moves if self.propagate_possible_moves else None)
         new_board_state.__evaluate()
 
