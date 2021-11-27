@@ -3,8 +3,6 @@ from __future__ import annotations
 from .move import Move
 from .board import Board
 from .constants import WHITE
-import time
-import numpy as np
 
 def prune(maximizing, best_score, child_score, best_child, child, alpha, beta):
     is_prune = False
@@ -49,7 +47,7 @@ def perform_minmax(board: Board, alpha, beta,
 
     return Move(board.move.opposite_color, best_child), best_score
 
-def get_next_move(board: Board, depth=3) -> Move:
+def get_next_move(board: Board, depth=5) -> Move:
     best_child, _ = perform_minmax(
         board,
         float('-inf'),

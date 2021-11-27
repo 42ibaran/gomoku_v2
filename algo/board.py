@@ -1,17 +1,13 @@
 from __future__ import annotations
-from multiprocessing.queues import Queue
 
 import numpy as np
 import pickle
-import time
-from multiprocessing import Process, Queue
 from hashlib import sha1
 from .move import Move
 from .constants import EMPTY, WHITE, BLACK, PATTERN_SIZES, \
                        EMPTY_CAPTURES_DICTIONARY
 from .errors import ForbiddenMoveError, ForbiddenMoveError
 from .masks import Patterns, PatternsValue, MASKS_WHITE, MASKS_BLACK
-# import functools
 
 # Patterns list explanation:
 #   First 19 numbers represent rows of the matrix
@@ -95,7 +91,6 @@ class Board():
 
     def evaluate_pattern(self, index):
         self.stats[WHITE]['scores'][index] = self.stats[BLACK]['scores'][index] = 0
-        # self.stats[WHITE]['free_threes'][index] = self.stats[BLACK]['free_threes'][index] = False
         if self.retreive_hashed_pattern_evaluation(index):
             return
         self.actually_evaluate_pattern(index)
@@ -292,24 +287,24 @@ class Board():
 
 def save_hashtables():
     pickle.dump(pattern_evaluation_hashtable, open("pattern_evaluation_hashtable.pickle", "wb"))
-    pickle.dump(small_pattern_evaluation_hashtable, open("small_pattern_evaluation_hashtable.pickle", "wb"))
-    pickle.dump(board_evaluation_hashtable, open("board_evaluation_hashtable.pickle", "wb"))
+    # pickle.dump(small_pattern_evaluation_hashtable, open("small_pattern_evaluation_hashtable.pickle", "wb"))
+    # pickle.dump(board_evaluation_hashtable, open("board_evaluation_hashtable.pickle", "wb"))
 
 def load_hashtables():
-    global pattern_evaluation_hashtable, small_pattern_evaluation_hashtable, board_evaluation_hashtable
+    global pattern_evaluation_hashtable#, small_pattern_evaluation_hashtable, board_evaluation_hashtable
     try:
         pattern_evaluation_hashtable = pickle.load(open("pattern_evaluation_hashtable.pickle", "rb"))
     except FileNotFoundError:
         print("Hmm, pattern_evaluation_hashtable pickle file not found?")
         pattern_evaluation_hashtable = {}
-    try:
-        board_evaluation_hashtable = pickle.load(open("board_evaluation_hashtable.pickle", "rb"))
-    except FileNotFoundError:
-        print("Hmm, board_evaluation_hashtable pickle file not found?")
-        board_evaluation_hashtable = {}
-    try:
-        small_pattern_evaluation_hashtable = pickle.load(open("small_pattern_evaluation_hashtable.pickle", "rb"))
-    except FileNotFoundError:
-        print("Hmm, small_pattern_evaluation_hashtable pickle file not found?")
-        small_pattern_evaluation_hashtable = {}
+    # try:
+        # board_evaluation_hashtable = pickle.load(open("board_evaluation_hashtable.pickle", "rb"))
+    # except FileNotFoundError:
+        # print("Hmm, board_evaluation_hashtable pickle file not found?")
+        # board_evaluation_hashtable = {}
+    # try:
+        # small_pattern_evaluation_hashtable = pickle.load(open("small_pattern_evaluation_hashtable.pickle", "rb"))
+    # except FileNotFoundError:
+        # print("Hmm, small_pattern_evaluation_hashtable pickle file not found?")
+        # small_pattern_evaluation_hashtable = {}
 
