@@ -29,20 +29,11 @@ PATTERN_SECONDARY_DIAG = 0 + 19 + 19 + 37
 pattern_evaluation_hashtable = {}
 small_pattern_evaluation_hashtable = {}
 board_evaluation_hashtable = {}
-count = 0
-total_time = 0
-copy_time = 0
-matrix_time = 0
-patterns_time = 0
-possible_moves_time = 0
-evaluate_time = 0
-get_pos_for_pos = 0
-union_manipulation_time = 0
 
 class Board():
     __slots__ = ['matrix', 'possible_moves', 'patterns',
                  'score', 'is_five_in_a_row', 'propagate_possible_moves',
-                 'hash_value', 'move', 'captures', 'stats', 'children']
+                 'hash_value', 'move', 'captures', 'stats', 'children', 'double_three']
 
     def __init__(self, empty=True):
         if not empty:
@@ -65,13 +56,10 @@ class Board():
             self.possible_moves = None
             self.score = 0
             self.is_five_in_a_row = None
-            # self.__init_patterns()
         self.children = {}
         self.hash_value = None
         self.propagate_possible_moves = True
-
-    # def __init_patterns(self):
-    #     self.patterns = ['0' * pattern_size for pattern_size in PATTERN_SIZES]
+        self.double_three = False
 
     def __find_captures(self, move: Move):
         y, x = move.position
@@ -99,16 +87,21 @@ class Board():
         ]
 
     def __update_patterns(self, move: Move) -> None:
-        y, x = move.position
+        indices = set()
+        moves = [Move(EMPTY, capture_position, move.opposite_color) for capture_position in move.captures] + [move]
+        for move in moves:
+            y, x = move.position
+            color = move.color if move.color != EMPTY else -move.previous_color
+            for index, place in self.__get_pattern_indices_and_places_for_position(y, x):
+                self.patterns[index] += color * (3 ** place)
+                indices.add(index)
 
-        color = move.color if move.color != EMPTY else -move.previous_color
-
-        for index, place in self.__get_pattern_indices_and_places_for_position(y, x):
-            self.patterns[index] += color * (3 ** place)
+        for index in indices:
             self.evaluate_pattern(index)
 
     def evaluate_pattern(self, index):
         self.stats[WHITE]['scores'][index] = self.stats[BLACK]['scores'][index] = 0
+        self.stats[WHITE]['free_threes'][index] = self.stats[BLACK]['free_threes'][index] = False
         if self.retreive_hashed_pattern_evaluation(index):
             return
         self.actually_evaluate_pattern(index)
@@ -129,14 +122,14 @@ class Board():
                             self.stats[color]['scores'][index] += total_occ * PatternsValue[pattern_code]
                             if pattern_code == Patterns.FIVE_IN_A_ROW:
                                 self.stats[color]['five_in_a_rows'][index] = True
-                            if pattern_code == Patterns.AX_DEVELOPING_TO_3:
+                            if pattern_code == Patterns.FREE_3:
                                 self.stats[color]['free_threes'][index] = True
                 pattern //= 3
                 pattern_size -= 1
 
 
     def retreive_hashed_pattern_evaluation(self, index):
-        hashval = self.patterns[index], PATTERN_SIZES[index]
+        hashval = hash((self.patterns[index], PATTERN_SIZES[index]))
         if hashval in pattern_evaluation_hashtable:
             self.stats[WHITE]['scores'][index], \
             self.stats[BLACK]['scores'][index], \
@@ -148,7 +141,7 @@ class Board():
         return False
 
     def save_pattern_evaluation(self, index):
-        hashval = self.patterns[index], PATTERN_SIZES[index]
+        hashval = hash((self.patterns[index], PATTERN_SIZES[index]))
         pattern_evaluation_hashtable[hashval] = self.stats[WHITE]['scores'][index], \
             self.stats[BLACK]['scores'][index], \
             self.stats[WHITE]['five_in_a_rows'][index], \
@@ -160,17 +153,15 @@ class Board():
         # if self.get_hash() in board_evaluation_hashtable:
         #     _, self.is_five_in_a_row = board_evaluation_hashtable[self.get_hash()]
         #     return
-        self.score = sum(self.stats[WHITE]['scores'] + self.stats[BLACK]['scores'])
+        self.score = self.get_captures_score() + sum(self.stats[WHITE]['scores'] + self.stats[BLACK]['scores'])
         self.is_five_in_a_row = any(self.stats[WHITE]['five_in_a_rows'] + self.stats[BLACK]['five_in_a_rows'])
-        
+        self.double_three = True if self.stats[self.move.color]['free_threes'].count(True) > 1 else False
+
         # self.save_evaluation_result()
 
     def get_captures_score(self):
         return PatternsValue[Patterns.CAPTURE] * \
             (self.captures[WHITE] - self.captures[BLACK])
-
-    def save_evaluation_result(self):
-        board_evaluation_hashtable[self.get_hash()] = (self.score, self.is_five_in_a_row)
 
     def __record_captures(self, move: Move) -> int:
         y, x = move.position
@@ -182,18 +173,28 @@ class Board():
             move.captures.add(capture_position_2)
             self.matrix[capture_position_1] = EMPTY
             self.matrix[capture_position_2] = EMPTY
-            self.__update_patterns(Move(EMPTY, capture_position_1, move.opposite_color))
-            self.__update_patterns(Move(EMPTY, capture_position_2, move.opposite_color))
+            # self.__update_patterns(Move(EMPTY, capture_position_1, move.opposite_color))
+            # self.__update_patterns(Move(EMPTY, capture_position_2, move.opposite_color))
 
     def record_new_move(self, position, color) -> Board:
+        if position in self.children:
+            new_board_state = self.children[position]
+        else:
+            new_board_state = self.actually_record_new_move(position, color)
+
+        if new_board_state.double_three:
+            raise ForbiddenMoveError("Double free-three.")
+
+        return new_board_state
+
+    def actually_record_new_move(self, position, color):
         if self.matrix[position] != EMPTY:
             raise ForbiddenMoveError("The cell is already taken you dum-dum.")
-
         new_board_state = self.__copy()
         new_board_state.matrix[position] = color
         new_board_state.move = Move(color, position)
-        new_board_state.__update_patterns(new_board_state.move)
         new_board_state.__record_captures(new_board_state.move)
+        new_board_state.__update_patterns(new_board_state.move)
         new_board_state.__get_possible_moves(self.possible_moves if self.propagate_possible_moves else None)
         new_board_state.__evaluate()
 
@@ -209,12 +210,6 @@ class Board():
         return self.hash_value
 
     def dump(self) -> None:
-        global count, total_time, copy_time, matrix_time, \
-            patterns_time, possible_moves_time, evaluate_time, \
-            get_pos_for_pos, union_manipulation_time
-        total_time = copy_time = matrix_time = patterns_time = \
-            possible_moves_time = evaluate_time = count = \
-            get_pos_for_pos = union_manipulation_time = 0
         index_0_9 = range(10)
         index_10_18 = range(10, 19)
         print('   ' + '  '.join(map(str, index_0_9)) + ' ' + ' '.join(map(str, index_10_18)))
@@ -233,28 +228,19 @@ class Board():
             yield move, child
 
     def __get_possible_moves(self, previous_possible_moves) -> None:
-        global union_manipulation_time
         if previous_possible_moves:
             y, x = self.move.position
-            a = time.time()
             self.possible_moves = {
                 (i, j) for i, j in self.get_possible_moves_for_position(y, x)
             }
-            b = time.time()
             self.possible_moves = self.possible_moves.union(self.move.captures)
             self.possible_moves = self.possible_moves.union(previous_possible_moves)
             if self.move.position in self.possible_moves:
                 self.possible_moves.remove(self.move.position)
         else:
             full_cells_indices = np.transpose(np.array(self.matrix).nonzero())
-            a = time.time()
             list_of_sets_of_positions = [ self.get_possible_moves_for_position(i, j) for i, j in full_cells_indices ]
-            b = time.time()
             self.possible_moves = set().union(*list_of_sets_of_positions)
-        # self.dump()
-        # print(self.possible_moves)
-        # input()
-        union_manipulation_time += (b - a)
 
     def get_possible_moves_for_position(self, y: int, x: int) -> set[tuple[int]]:
         for i in range(y - 1, y + 2):
@@ -282,35 +268,31 @@ class Board():
             return True
         if not self.is_five_in_a_row:
             return False
-        return not any(not child.is_five_in_a_row for child in self.children.values())
-
-        #     try:
-        #         new_state = self.record_new_move(possible_move, self.move.opposite_color)
-        #     except ForbiddenMoveError:
-        #         continue
-        #     if not new_state.is_five_in_a_row:
-        #         real_possible_moves.add(possible_move)
-        #         cant_be_undone = False
-        # self.possible_moves = real_possible_moves
-        # self.propagate_possible_moves = False
-        # return cant_be_undone
+        can_be_undone = False
+        self.propagate_possible_moves = False
+        self.possible_moves = set()
+        for move, child in self.children.items():
+            if not child.is_five_in_a_row:
+                can_be_undone = True
+                self.possible_moves.add(move)
+        return not can_be_undone
 
     def __copy(self):
         new_board = Board()
         new_board.matrix = self.matrix.copy()
         new_board.captures = self.captures.copy()
         new_board.score = self.score
-        new_board.patterns = self.patterns.copy()
+        new_board.patterns = [*self.patterns]
         new_board.stats = {
             WHITE: {
-                'scores': self.stats[WHITE]['scores'].copy(),
-                'five_in_a_rows': self.stats[WHITE]['five_in_a_rows'].copy(),
-                'free_threes': self.stats[WHITE]['free_threes'].copy(),
+                'scores': [*self.stats[WHITE]['scores']],
+                'five_in_a_rows': [*self.stats[WHITE]['five_in_a_rows']],
+                'free_threes': [*self.stats[WHITE]['free_threes']],
             },
             BLACK: {
-                'scores': self.stats[BLACK]['scores'].copy(),
-                'five_in_a_rows': self.stats[BLACK]['five_in_a_rows'].copy(),
-                'free_threes': self.stats[BLACK]['free_threes'].copy(),
+                'scores': [*self.stats[BLACK]['scores']],
+                'five_in_a_rows': [*self.stats[BLACK]['five_in_a_rows']],
+                'free_threes': [*self.stats[BLACK]['free_threes']],
             }
         }
         return new_board

@@ -8,7 +8,6 @@ import numpy as np
 
 def prune(maximizing, best_score, child_score, best_child, child, alpha, beta):
     is_prune = False
-
     if maximizing:
         if child_score > best_score:
             best_child = child
@@ -29,11 +28,11 @@ def perform_minmax(board: Board, alpha, beta,
                     remaining_depth):
     maximizing = not board.move.color == WHITE
 
-
     if remaining_depth == 0:
         return None, board.score
-    
-    board.build_children()
+
+    if len(board.children) == 0:
+        board.build_children()
     if board.check_if_over():
         return None, board.score
 
@@ -50,7 +49,7 @@ def perform_minmax(board: Board, alpha, beta,
 
     return Move(board.move.opposite_color, best_child), best_score
 
-def get_next_move(board: Board, depth=5) -> Move:
+def get_next_move(board: Board, depth=4) -> Move:
     best_child, _ = perform_minmax(
         board,
         float('-inf'),

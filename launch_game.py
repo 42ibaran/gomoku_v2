@@ -60,7 +60,6 @@ def play_in_terminal(human_vs_maximilian):
                 print("Suggested move: ", move_maximilian.position, sep="")
     except KeyboardInterrupt:
         print()
-        pass
     # save_hashtables()
     print("Good bye!")
     

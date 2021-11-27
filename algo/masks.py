@@ -4,15 +4,11 @@ Patterns = Enum(
     'Patterns',
     """
     AX_DEVELOPING_TO_2
-    BLOCK_AX_DEVELOPING_TO_2
     AX_DEVELOPING_TO_3
-    BLOCK_AX_DEVELOPING_TO_3
     AX_DEVELOPING_TO_4
-    BLOCK_AX_DEVELOPING_TO_4
     FREE_4
-    BLOCK_FREE_4
+    FREE_3
     FIVE_IN_A_ROW
-    BLOCK_FIVE_IN_A_ROW
     CAPTURE
     POTENTIAL_CAPTURE
     """
@@ -20,49 +16,26 @@ Patterns = Enum(
 
 PatternsValue = {
     Patterns.AX_DEVELOPING_TO_2       : 1,
-    Patterns.BLOCK_AX_DEVELOPING_TO_2 : 10,
-    Patterns.POTENTIAL_CAPTURE        : 100,
-    Patterns.AX_DEVELOPING_TO_3       : 1000,
-    Patterns.BLOCK_AX_DEVELOPING_TO_3 : 10000,
-    Patterns.AX_DEVELOPING_TO_4       : 100000,
-    Patterns.BLOCK_AX_DEVELOPING_TO_4 : 1000000,
-    Patterns.FREE_4                   : 10000000,
-    Patterns.BLOCK_FREE_4             : 100000000,
-    Patterns.CAPTURE                  : 1000000000,
-    Patterns.FIVE_IN_A_ROW            : 10000000000,
-    Patterns.BLOCK_FIVE_IN_A_ROW      : 100000000000,
+    Patterns.POTENTIAL_CAPTURE        : 10,
+    Patterns.AX_DEVELOPING_TO_3       : 100,
+    Patterns.FREE_3                   : 1000,
+    Patterns.AX_DEVELOPING_TO_4       : 10000,
+    Patterns.FREE_4                   : 100000,
+    Patterns.CAPTURE                  : 1000000,
+    Patterns.FIVE_IN_A_ROW            : 10000000,
 }
-
-# Patterns.BLOCK_FIVE_IN_A_ROW:[
-#     0xa1,   # XOOOO
-#     0xd7,   # OXOOO
-#     0xe9,   # OOXOO
-#     0xef,   # OOOXO
-#     0xf1,   # OOOOX
-# ],
-# Patterns.BLOCK_AX_DEVELOPING_TO_4: [
-#     0x9f,   # XOOO.
-#     0xd5,   # OXOO.
-#     0xe7,   # OOXO.
-#     0xed,   # OOOX.
-#     0x35,   # .XOOO
-#     0x47,   # .OXOO
-#     0x4d,   # .OOXO
-#     0x4f,   # .OOOX
-# ],
-
-# MASKS = {
-#     Patterns.FIVE_IN_A_ROW: 0x1f,
-#     Patterns.AX_DEVELOPING_TO_4: 0xf,
-#     Patterns.AX_DEVELOPING_TO_3: 0x7,
-#     Patterns.AX_DEVELOPING_TO_2: 0x3
-# }
 
 MASKS_WHITE = {
     6: {
         Patterns.FREE_4: [
             0x78,   # .XXXX.
         ],
+        Patterns.FREE_3: [
+            0x75,   # .XXX..
+            0x27,   # ..XXX.
+            0x6f,   # .XX.X.
+            0x5d,   # .X.XX.
+        ]
     },
     5: {
         Patterns.FIVE_IN_A_ROW: [
@@ -73,15 +46,15 @@ MASKS_WHITE = {
             0x5e,   # X.XXX
             0x70,   # XX.XX
             0x76,   # XXX.X
-            0x78,   # XXXX.
+            # 0x78,   # XXXX.
         ],
         Patterns.AX_DEVELOPING_TO_3: [
-            0x75,   # XXX..
-            0x27,   # .XXX.
+            # 0x75,   # XXX..
+            # 0x27,   # .XXX.
             0xd,    # ..XXX
-            0x6f,   # XX.X.
+            # 0x6f,   # XX.X.
             0x25,   # .XX.X
-            0x5d,   # X.XX.
+            # 0x5d,   # X.XX.
             0x1f,   # .X.XX
             0x6d,   # XX..X
             0x5b,   # X.X.X
@@ -112,6 +85,12 @@ MASKS_BLACK = {
     6: {
         Patterns.FREE_4: [
             240
+        ],
+        Patterns.FREE_3: [
+            234,
+            78,
+            222,
+            186,
         ]
     },
     5: {
@@ -123,15 +102,15 @@ MASKS_BLACK = {
             188,
             224,
             236,
-            240
+            # 240
         ], 
         Patterns.AX_DEVELOPING_TO_3: [
-            234,
-            78,
+            # 234,
+            # 78,
             26,
-            222,
+            # 222,
             74,
-            186,
+            # 186,
             62,
             218,
             182,
@@ -157,11 +136,3 @@ MASKS_BLACK = {
         ]
     }
 }
-
-# BLOCKING_PATTERN_CODE_CONVERTION = {
-#     Patterns.AX_DEVELOPING_TO_2 : Patterns.BLOCK_AX_DEVELOPING_TO_2,
-#     Patterns.AX_DEVELOPING_TO_3 : Patterns.BLOCK_AX_DEVELOPING_TO_3,
-#     Patterns.AX_DEVELOPING_TO_4 : Patterns.BLOCK_AX_DEVELOPING_TO_4,
-#     Patterns.FREE_4             : Patterns.BLOCK_FREE_4,
-#     Patterns.FIVE_IN_A_ROW      : Patterns.BLOCK_FIVE_IN_A_ROW,
-# }
