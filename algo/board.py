@@ -40,17 +40,17 @@ class Board():
             self.matrix = np.zeros((19, 19), dtype=int)
             self.move = None
             self.captures = EMPTY_CAPTURES_DICTIONARY
-            self.patterns = {index: 0 for index in range((19 + 37) * 2)}
+            self.patterns = [0] * ((19 + 37) * 2)
             self.stats = {
                 WHITE: {
-                    'scores': {index: 0 for index in range((19 + 37) * 2)},
-                    'five_in_a_rows': {index: False for index in range((19 + 37) * 2)},
-                    'free_threes': {index: False for index in range((19 + 37) * 2)},
+                    'scores': [0] * ((19 + 37) * 2),
+                    'five_in_a_rows': [False] * ((19 + 37) * 2),
+                    'free_threes': [False] * ((19 + 37) * 2),
                 },
                 BLACK: {
-                    'scores': {index: 0 for index in range((19 + 37) * 2)},
-                    'five_in_a_rows': {index: False for index in range((19 + 37) * 2)},
-                    'free_threes': {index: False for index in range((19 + 37) * 2)},
+                    'scores': [0] * ((19 + 37) * 2),
+                    'five_in_a_rows': [False] * ((19 + 37) * 2),
+                    'free_threes': [False] * ((19 + 37) * 2),
                 }
             }
             self.possible_moves = None
@@ -144,17 +144,11 @@ class Board():
             self.stats[BLACK]['free_threes'][index]
 
     def __evaluate_score(self) -> None:
-        self.score = self.get_captures_score() + sum(
-            list(self.stats[WHITE]['scores'].values()) + \
-            list(self.stats[BLACK]['scores'].values())
-        )
+        self.score = self.get_captures_score() + sum(self.stats[WHITE]['scores'] + self.stats[BLACK]['scores'])
 
     def __evaluate_stats(self) -> None:
-        self.is_five_in_a_row = any(
-            list(self.stats[WHITE]['five_in_a_rows'].values()) + \
-            list(self.stats[BLACK]['five_in_a_rows'].values())
-        )
-        self.double_three = True if list(self.stats[self.move.color]['free_threes'].values()).count(True) > 1 else False
+        self.is_five_in_a_row = any(self.stats[WHITE]['five_in_a_rows'] + self.stats[BLACK]['five_in_a_rows'])
+        self.double_three = True if self.stats[self.move.color]['free_threes'].count(True) > 1 else False
 
     def get_captures_score(self):
         return PatternsValue[Patterns.CAPTURE] * \
@@ -223,8 +217,7 @@ class Board():
             print()
 
     def order_children_by_score(self, maximizing):
-        for move, child in sorted(self.children.items(), key=lambda item: item[1].score, reverse=maximizing):
-            yield move, child
+        return sorted(self.children.items(), key=lambda item: item[1].score, reverse=maximizing)
 
     def __get_possible_moves(self, previous_possible_moves) -> None:
         if previous_possible_moves:
@@ -281,17 +274,17 @@ class Board():
         new_board.matrix = self.matrix.copy()
         new_board.captures = self.captures.copy()
         new_board.score = self.score
-        new_board.patterns = self.patterns.copy()
+        new_board.patterns = [*self.patterns]
         new_board.stats = {
             WHITE: {
-                'scores': self.stats[WHITE]['scores'].copy(),
-                'five_in_a_rows': self.stats[WHITE]['five_in_a_rows'].copy(),
-                'free_threes': {index: False for index in range((19 + 37) * 2)},
+                'scores': [*self.stats[WHITE]['scores']],
+                'five_in_a_rows': [*self.stats[WHITE]['five_in_a_rows']],
+                'free_threes': [False] * ((19 + 37) * 2),
             },
             BLACK: {
-                'scores': self.stats[BLACK]['scores'].copy(),
-                'five_in_a_rows': self.stats[BLACK]['five_in_a_rows'].copy(),
-                'free_threes': {index: False for index in range((19 + 37) * 2)},
+                'scores': [*self.stats[BLACK]['scores']],
+                'five_in_a_rows': [*self.stats[BLACK]['five_in_a_rows']],
+                'free_threes': [False] * ((19 + 37) * 2),
             }
         }
         return new_board

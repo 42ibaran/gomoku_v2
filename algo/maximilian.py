@@ -49,7 +49,7 @@ def perform_minmax(board: Board, alpha, beta,
 
     return Move(board.move.opposite_color, best_child), best_score
 
-def get_next_move(board: Board, depth=5) -> Move:
+def get_next_move(board: Board, depth=3) -> Move:
     best_child, _ = perform_minmax(
         board,
         float('-inf'),
