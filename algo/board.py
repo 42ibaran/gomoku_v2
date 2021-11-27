@@ -42,7 +42,7 @@ union_manipulation_time = 0
 class Board():
     __slots__ = ['matrix', 'possible_moves', 'patterns',
                  'score', 'is_five_in_a_row', 'propagate_possible_moves',
-                 'hash_value', 'move', 'captures', 'stats']
+                 'hash_value', 'move', 'captures', 'stats', 'children']
 
     def __init__(self, empty=True):
         if not empty:
@@ -66,6 +66,7 @@ class Board():
             self.score = 0
             self.is_five_in_a_row = None
             # self.__init_patterns()
+        self.children = {}
         self.hash_value = None
         self.propagate_possible_moves = True
 
@@ -228,17 +229,7 @@ class Board():
             print()
 
     def order_children_by_score(self, maximizing):
-        children = {}
-        forbidden_moves = set()
-        for possible_move in self.possible_moves:
-            try:
-                child = self.record_new_move(possible_move, self.move.opposite_color)
-                children[possible_move] = child
-            except ForbiddenMoveError:
-                forbidden_moves.add(possible_move)
-        self.possible_moves -= forbidden_moves
-
-        for move, child in sorted(children.items(), key=lambda item: item[1].score, reverse=maximizing):
+        for move, child in sorted(self.children.items(), key=lambda item: item[1].score, reverse=maximizing):
             yield move, child
 
     def __get_possible_moves(self, previous_possible_moves) -> None:
@@ -275,14 +266,24 @@ class Board():
                 if self.matrix[i][j] == EMPTY:
                     yield i, j
 
+    def build_children(self):
+        forbidden_moves = set()
+        for possible_move in self.possible_moves:
+            try:
+                child = self.record_new_move(possible_move, self.move.opposite_color)
+                self.children[possible_move] = child
+            except ForbiddenMoveError:
+                forbidden_moves.add(possible_move)
+        self.possible_moves -= forbidden_moves
+
     def check_if_over(self):
         if self.captures[WHITE] >= 10 or \
            self.captures[BLACK] >= 10:
             return True
-        return self.is_five_in_a_row
-        # cant_be_undone = True
-        # real_possible_moves = set()
-        # for possible_move in self.possible_moves:
+        if not self.is_five_in_a_row:
+            return False
+        return not any(not child.is_five_in_a_row for child in self.children.values())
+
         #     try:
         #         new_state = self.record_new_move(possible_move, self.move.opposite_color)
         #     except ForbiddenMoveError:

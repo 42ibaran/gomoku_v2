@@ -29,7 +29,12 @@ def perform_minmax(board: Board, alpha, beta,
                     remaining_depth):
     maximizing = not board.move.color == WHITE
 
-    if remaining_depth == 0 or board.check_if_over():
+
+    if remaining_depth == 0:
+        return None, board.score
+    
+    board.build_children()
+    if board.check_if_over():
         return None, board.score
 
     best_child = None
