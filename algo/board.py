@@ -87,16 +87,10 @@ class Board():
         ]
 
     def __update_patterns(self, move: Move) -> None:
-        indices = set()
-        moves = [Move(EMPTY, capture_position, move.opposite_color) for capture_position in move.captures] + [move]
-        for move in moves:
-            y, x = move.position
-            color = move.color if move.color != EMPTY else -move.previous_color
-            for index, place in self.__get_pattern_indices_and_places_for_position(y, x):
-                self.patterns[index] += color * (3 ** place)
-                indices.add(index)
-
-        for index in indices:
+        y, x = move.position
+        color = move.color if move.color != EMPTY else -move.previous_color
+        for index, place in self.__get_pattern_indices_and_places_for_position(y, x):
+            self.patterns[index] += color * (3 ** place)
             self.evaluate_pattern(index)
 
     def evaluate_pattern(self, index):
@@ -173,8 +167,8 @@ class Board():
             move.captures.add(capture_position_2)
             self.matrix[capture_position_1] = EMPTY
             self.matrix[capture_position_2] = EMPTY
-            # self.__update_patterns(Move(EMPTY, capture_position_1, move.opposite_color))
-            # self.__update_patterns(Move(EMPTY, capture_position_2, move.opposite_color))
+            self.__update_patterns(Move(EMPTY, capture_position_1, move.opposite_color))
+            self.__update_patterns(Move(EMPTY, capture_position_2, move.opposite_color))
 
     def record_new_move(self, position, color) -> Board:
         if position in self.children:
@@ -190,12 +184,12 @@ class Board():
         new_board_state = self.__copy()
         new_board_state.matrix[position] = color
         new_board_state.move = Move(color, position)
-        new_board_state.__record_captures(new_board_state.move)
         new_board_state.__update_patterns(new_board_state.move)
 
         if new_board_state.double_three:
             raise ForbiddenMoveError("Double free-three.")
-
+        
+        new_board_state.__record_captures(new_board_state.move)
         new_board_state.__get_possible_moves(self.possible_moves if self.propagate_possible_moves else None)
         new_board_state.__evaluate()
 
