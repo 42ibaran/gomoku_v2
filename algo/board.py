@@ -197,12 +197,13 @@ class Board():
     def dump(self) -> None:
         index_0_9 = range(10)
         index_10_18 = range(10, 19)
+        print("")
         print('   ' + '  '.join(map(str, index_0_9)) + ' ' + ' '.join(map(str, index_10_18)))
         for index, row in enumerate(self.matrix):
             print(index, end=' ' * (1 if index >= 10 else 2))
             for element in row:
                 if element == EMPTY:
-                    stone = '+'
+                    stone = '·'
                 else:
                     stone = '○' if element == BLACK else '●'
                 print(stone, end='  ')
