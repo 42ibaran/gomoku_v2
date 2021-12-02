@@ -1,12 +1,12 @@
 import argparse
-import sys
 import time
-from algo.maximilian import Maximilian
+from algo.maximilian import get_next_move
 from algo.board import load_hashtables, save_hashtables
 from algo.game import Game
 from algo.move import Move
 from algo.constants import WHITE, BLACK
-from algo.errors import YouAreDumbException
+from algo.errors import ForbiddenMoveError
+import cProfile
 
 
 def parse_arguments():
@@ -23,7 +23,6 @@ def get_human_move(color):
 
 def play_in_terminal(human_vs_maximilian):
     game = Game()
-    maximilian = Maximilian()
     load_hashtables()
     last_move = None
     try:
@@ -34,17 +33,20 @@ def play_in_terminal(human_vs_maximilian):
                     game.record_new_move(move_human)
                     last_move = move_human
                     break
-                except YouAreDumbException:
-                    pass
+                except (ForbiddenMoveError, ValueError) as e:
+                    print(e)
             game.dump()
             if game.is_over:
                 print("It's over bitch.")
                 break
             a = time.time()
-            move_maximilian = maximilian.get_next_move(game.board)
+            prof = cProfile.Profile()
+            move_maximilian = prof.runcall(get_next_move, game.board)
+            prof.print_stats()
             b = time.time()
             print("Time: %f" % (b - a))
             if human_vs_maximilian:
+                print(move_maximilian.position)
                 game.record_new_move(move_maximilian)
                 game.dump()
                 last_move = move_maximilian
@@ -55,9 +57,9 @@ def play_in_terminal(human_vs_maximilian):
             else:
                 print("Suggested move: ", move_maximilian.position, sep="")
     except KeyboardInterrupt:
-        pass
+        print()
     save_hashtables()
-    print("\nGood bye!")
+    print("Good bye!")
     
 
 if __name__ == "__main__":
