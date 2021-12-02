@@ -46,15 +46,10 @@ MASKS_WHITE = {
             0x5e,   # X.XXX
             0x70,   # XX.XX
             0x76,   # XXX.X
-            # 0x78,   # XXXX.
         ],
         Patterns.AX_DEVELOPING_TO_3: [
-            # 0x75,   # XXX..
-            # 0x27,   # .XXX.
             0xd,    # ..XXX
-            # 0x6f,   # XX.X.
             0x25,   # .XX.X
-            # 0x5d,   # X.XX.
             0x1f,   # .X.XX
             0x6d,   # XX..X
             0x5b,   # X.X.X
@@ -102,15 +97,10 @@ MASKS_BLACK = {
             188,
             224,
             236,
-            # 240
         ], 
         Patterns.AX_DEVELOPING_TO_3: [
-            # 234,
-            # 78,
             26,
-            # 222,
             74,
-            # 186,
             62,
             218,
             182,

@@ -3,6 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pickle
 from hashlib import sha1
+from functools import cache
 from .move import Move
 from .constants import EMPTY, WHITE, BLACK, PATTERN_SIZES, \
                        EMPTY_CAPTURES_DICTIONARY
@@ -23,8 +24,6 @@ PATTERN_MAIN_DIAG      = 0 + 19 + 19
 PATTERN_SECONDARY_DIAG = 0 + 19 + 19 + 37
 
 pattern_evaluation_hashtable = {}
-small_pattern_evaluation_hashtable = {}
-board_evaluation_hashtable = {}
 
 class Board():
     __slots__ = ['matrix', 'possible_moves', 'patterns',
@@ -71,6 +70,7 @@ class Board():
                     yield (i, j)
 
     @staticmethod
+    @cache
     def __get_pattern_indices_and_places_for_position(y, x):
         main_diagonal_power = 18 - max(x, y)
         secondary_diagonal_power = 18 - max(18 - y, x)
@@ -88,6 +88,8 @@ class Board():
         for index, place in self.__get_pattern_indices_and_places_for_position(y, x):
             self.patterns[index] += color * (3 ** place)
             self.evaluate_pattern(index)
+            if move.color != EMPTY and self.stats[color]['free_threes'].count(True) > 1:
+                raise ForbiddenMoveError("Go fuck yourself somewhere else, double free-three.")
 
     def evaluate_pattern(self, index):
         self.stats[WHITE]['scores'][index] = self.stats[BLACK]['scores'][index] = 0
@@ -115,7 +117,6 @@ class Board():
                                 self.stats[color]['free_threes'][index] = True
                 pattern //= 3
                 pattern_size -= 1
-
 
     def retreive_hashed_pattern_evaluation(self, index):
         hashval = hash((self.patterns[index], PATTERN_SIZES[index]))
@@ -178,10 +179,6 @@ class Board():
         new_board_state.move = Move(color, position)
         new_board_state.__update_patterns(new_board_state.move)
         new_board_state.__evaluate_stats()
-
-        if new_board_state.double_three:
-            raise ForbiddenMoveError("Double free-three.")
-        
         new_board_state.__record_captures(new_board_state.move)
         new_board_state.__get_possible_moves(self.possible_moves if self.propagate_possible_moves else None)
         new_board_state.__evaluate_score()
@@ -287,24 +284,11 @@ class Board():
 
 def save_hashtables():
     pickle.dump(pattern_evaluation_hashtable, open("pattern_evaluation_hashtable.pickle", "wb"))
-    # pickle.dump(small_pattern_evaluation_hashtable, open("small_pattern_evaluation_hashtable.pickle", "wb"))
-    # pickle.dump(board_evaluation_hashtable, open("board_evaluation_hashtable.pickle", "wb"))
 
 def load_hashtables():
-    global pattern_evaluation_hashtable#, small_pattern_evaluation_hashtable, board_evaluation_hashtable
+    global pattern_evaluation_hashtable
     try:
         pattern_evaluation_hashtable = pickle.load(open("pattern_evaluation_hashtable.pickle", "rb"))
     except FileNotFoundError:
         print("Hmm, pattern_evaluation_hashtable pickle file not found?")
         pattern_evaluation_hashtable = {}
-    # try:
-        # board_evaluation_hashtable = pickle.load(open("board_evaluation_hashtable.pickle", "rb"))
-    # except FileNotFoundError:
-        # print("Hmm, board_evaluation_hashtable pickle file not found?")
-        # board_evaluation_hashtable = {}
-    # try:
-        # small_pattern_evaluation_hashtable = pickle.load(open("small_pattern_evaluation_hashtable.pickle", "rb"))
-    # except FileNotFoundError:
-        # print("Hmm, small_pattern_evaluation_hashtable pickle file not found?")
-        # small_pattern_evaluation_hashtable = {}
-

@@ -1,5 +1,4 @@
 import argparse
-import sys
 import time
 from algo.maximilian import get_next_move
 from algo.board import load_hashtables, save_hashtables
@@ -44,7 +43,6 @@ def play_in_terminal(human_vs_maximilian):
             prof = cProfile.Profile()
             move_maximilian = prof.runcall(get_next_move, game.board)
             prof.print_stats()
-            # move_maximilian = maximilian.get_next_move(game.board)
             b = time.time()
             print("Time: %f" % (b - a))
             if human_vs_maximilian:
