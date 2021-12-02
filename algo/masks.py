@@ -16,13 +16,13 @@ Patterns = Enum(
 
 PatternsValue = {
     Patterns.AX_DEVELOPING_TO_2       : 1,
-    Patterns.POTENTIAL_CAPTURE        : 10,
-    Patterns.AX_DEVELOPING_TO_3       : 100,
-    Patterns.FREE_3                   : 1000,
-    Patterns.AX_DEVELOPING_TO_4       : 10000,
-    Patterns.FREE_4                   : 100000,
-    Patterns.CAPTURE                  : 1000000,
-    Patterns.FIVE_IN_A_ROW            : 10000000,
+    Patterns.AX_DEVELOPING_TO_3       : 10,
+    Patterns.AX_DEVELOPING_TO_4       : 100,
+    Patterns.POTENTIAL_CAPTURE        : 1000,
+    Patterns.FREE_3                   : 10000,
+    Patterns.FREE_4                   : 1000000,
+    Patterns.CAPTURE                  : 10000000,
+    Patterns.FIVE_IN_A_ROW            : 100000000,
 }
 
 MASKS_WHITE = {

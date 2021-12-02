@@ -4,6 +4,10 @@ from .move import Move
 from .board import Board
 from .constants import WHITE, BLACK
 
+start_time = None
+intelligence = None
+TIME_LIMIT = 0.49
+
 def prune(maximizing, best_score, child_score, best_child, child, alpha, beta):
     is_prune = False
     if maximizing:
@@ -26,7 +30,7 @@ def perform_minmax(board: Board, alpha, beta,
                     remaining_depth):
     maximizing = not board.move.color == WHITE
 
-    if remaining_depth == 0:
+    if remaining_depth == 1:
         return None, board.score
 
     if len(board.children) == 0:
@@ -37,8 +41,11 @@ def perform_minmax(board: Board, alpha, beta,
     best_child = None
     best_score = float('-inf') if maximizing else float('inf')
     for possible_move, next_board in board.order_children_by_score(maximizing):
-        _, child_score = perform_minmax(next_board, alpha, beta,
-                                        remaining_depth - 1)
+        if time.time() - start_time < TIME_LIMIT or intelligence:
+            _, child_score = perform_minmax(next_board, alpha, beta,
+                                            remaining_depth - 1)
+        else:
+            child_score = next_board.score
         is_prune, best_score, best_child, alpha, beta = prune(maximizing, best_score,
                                                               child_score, best_child,
                                                               possible_move, alpha, beta)
@@ -47,8 +54,10 @@ def perform_minmax(board: Board, alpha, beta,
 
     return Move(board.move.opposite_color, best_child), best_score
 
-def get_next_move(board: Board, depth=5) -> (Move, float):
-    a = time.time()
+def get_next_move(board: Board, depth=4) -> tuple[Move, float]:
+    global start_time, intelligence
+    start_time = time.time()
+    intelligence = True
     if not board.move:
         return Move(BLACK, "9 9"), 0.0
     best_child, _ = perform_minmax(
@@ -58,4 +67,4 @@ def get_next_move(board: Board, depth=5) -> (Move, float):
         depth
     )
     b = time.time()
-    return best_child, (b - a)
+    return best_child, (b - start_time)

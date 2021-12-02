@@ -7,7 +7,7 @@ REGEX_MOVE_STRING = r'^([0-9]|1[0-8]) ([0-9]|1[0-8])$'
 class Move():
     __slots__ = ['position', 'color', 'previous_color', 'opposite_color',
                  'captures']
-    def __init__(self, color: int, position: Union[tuple[int], str],
+    def __init__(self, color: int, position, #: Union[tuple[int], str],
                  previous_color: int = EMPTY):
         if type(position) == str:
             regex_result = re.search(REGEX_MOVE_STRING, position)

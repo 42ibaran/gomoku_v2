@@ -208,6 +208,8 @@ class Board():
                     stone = '○' if element == BLACK else '●'
                 print(stone, end='  ')
             print()
+        for move, child in self.children.items():
+            print(move, child.score, sep='  \t')
 
     def order_children_by_score(self, maximizing):
         return sorted(self.children.items(), key=lambda item: item[1].score, reverse=maximizing)
