@@ -1,8 +1,8 @@
 from __future__ import annotations
-
+import time
 from .move import Move
 from .board import Board
-from .constants import WHITE
+from .constants import WHITE, BLACK
 
 def prune(maximizing, best_score, child_score, best_child, child, alpha, beta):
     is_prune = False
@@ -47,7 +47,8 @@ def perform_minmax(board: Board, alpha, beta,
 
     return Move(board.move.opposite_color, best_child), best_score
 
-def get_next_move(board: Board, depth=5) -> Move:
+def get_next_move(board: Board, depth=5) -> (Move, float):
+    a = time.time()
     if not board.move:
         return Move(BLACK, "9 9"), 0.0
     best_child, _ = perform_minmax(
@@ -56,4 +57,5 @@ def get_next_move(board: Board, depth=5) -> Move:
         float('inf'),
         depth
     )
-    return best_child
+    b = time.time()
+    return best_child, (b - a)

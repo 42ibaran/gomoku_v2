@@ -4,7 +4,6 @@ from algo.board import load_hashtables, save_hashtables
 from algo.constants import WHITE, BLACK, EMPTY, COLOR_DICTIONARY
 from algo.errors import ForbiddenMoveError
 from algo.game import Game
-from algo.maximilian import Maximilian
 from algo.move import Move
 import cProfile
 
@@ -16,7 +15,8 @@ def get_arguments():
     parser.add_argument("-w", "--white", action='store_true', help="Play as white (2nd turn).")
     parser.add_argument("-i", "--intelligent", action='store_true', help="Use The I.Max aka. The Intelligent Maximilian\n[default option The MP.Max. aka. The Max Power Maximilian]")
     arguments = parser.parse_args()
-    return arguments.terminal, arguments.maximilian, arguments.suggestion, arguments.white, arguments.intelligent
+    white = arguments.white if arguments.maximilian else False
+    return arguments.terminal, arguments.maximilian, arguments.suggestion, white, arguments.intelligent
 
 def get_human_move(game, last_move=None):
     move_position = input("Where would you like to play? <pos_y pos_x> : ")
@@ -38,8 +38,8 @@ def print_turn(human_turn, last_move):
 def print_maximilian_move(position, time):
     print("Maximilian's move: {}\nTime: {}".format(position, time))
 
-def print_maximilian_suggestion(position):
-    print("Suggested move: {}".format(position))
+def print_maximilian_suggestion(position, time):
+    print("Suggested move: {}\nTime: {}".format(position, time))
 
 def game_over_bitch():
     print("It's over bitch.")
@@ -57,8 +57,8 @@ def play_in_terminal(human_vs_maximilian, suggestion, human_as_white, intelligen
             print_maximilian_move(last_move.position, time_maximilian)
         else:
             if suggestion:
-                suggestion_maximilian, _ = get_next_move(game.board)
-                print_maximilian_suggestion(suggestion_maximilian.position)
+                suggestion_maximilian, time_maximilian = get_next_move(game.board)
+                print_maximilian_suggestion(suggestion_maximilian.position, time_maximilian)
             last_move = get_human_move(game, last_move)
         game.record_new_move(last_move)
         game.dump()
