@@ -1,6 +1,6 @@
 import argparse
-from algo.maximilian import get_next_move
-from algo.board import load_hashtables, save_hashtables
+from algo.maximilian import get_next_move, start_background_search, end_background_search
+from algo.board import save_hashtables
 from algo.constants import WHITE, BLACK, EMPTY, COLOR_DICTIONARY
 from algo.errors import ForbiddenMoveError
 from algo.game import Game
@@ -20,14 +20,19 @@ def get_arguments():
 
 def get_and_record_human_move(game: Game, last_move=None):
     move_color = last_move.opposite_color if last_move else BLACK
+    bg_process = start_background_search(game.board)
     while True:
         try:
             move_position = input("Where would you like to play? <pos_y pos_x> : ")
             human_move = Move(move_color, move_position)
+            end_background_search(bg_process)
             game.record_new_move(human_move)
             break
         except (ForbiddenMoveError, ValueError) as e:
             print(e)
+        except KeyboardInterrupt:
+            end_background_search(bg_process)
+            exit(0)
     return human_move
 
 def print_turn(human_turn, last_move):
@@ -35,11 +40,11 @@ def print_turn(human_turn, last_move):
             COLOR_DICTIONARY[last_move.opposite_color if last_move else BLACK],
             "HUMAN" if human_turn else "MAXIM"))
 
-def print_maximilian_move(position, time):
-    print("Maximilian's move: {}\nTime: {}".format(position, time))
+def print_maximilian_move(position, time, depth):
+    print("Maximilian's move: {}\nTime: {:.3f}\nDepth: {}".format(position, time, depth))
 
-def print_maximilian_suggestion(position, time):
-    print("Suggested move: {}\nTime: {}".format(position, time))
+def print_maximilian_suggestion(position, time, depth):
+    print("Suggested move: {}\nTime: {:.3f}\nDepth: {}".format(position, time, depth))
 
 def game_over_bitch():
     print("It's over bitch.")
@@ -53,13 +58,13 @@ def play_in_terminal(human_vs_maximilian, suggestion, human_as_white, intelligen
     while True:
         print_turn(human_turn, last_move)
         if human_vs_maximilian and not human_turn:
-            last_move, time_maximilian = get_next_move(game.board)
-            print_maximilian_move(last_move.position, time_maximilian)
+            last_move, time_maximilian, depth = get_next_move(game.board)
+            print_maximilian_move(last_move.position, time_maximilian, depth)
             game.record_new_move(last_move)
         else:
             if suggestion:
-                suggestion_maximilian, time_maximilian = get_next_move(game.board)
-                print_maximilian_suggestion(suggestion_maximilian.position, time_maximilian)
+                suggestion_maximilian, time_maximilian, depth = get_next_move(game.board)
+                print_maximilian_suggestion(suggestion_maximilian.position, time_maximilian, depth)
             last_move = get_and_record_human_move(game, last_move)
         game.dump()
         print("TURN: {}".format(turn))
@@ -72,7 +77,7 @@ if __name__ == "__main__":
     terminal, human_vs_maximilian, suggestion, human_as_white, intelligent = get_arguments()
     if (terminal):
         try:
-            load_hashtables()
+            # load_hashtables()
             play_in_terminal(human_vs_maximilian, suggestion, human_as_white, intelligent)
         except KeyboardInterrupt:
             pass
