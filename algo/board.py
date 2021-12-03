@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pickle
 from hashlib import sha1
-from functools import cache
+# from functools import cache
 from .move import Move
 from .constants import EMPTY, WHITE, BLACK, PATTERN_SIZES, \
                        EMPTY_CAPTURES_DICTIONARY
@@ -28,11 +28,12 @@ pattern_evaluation_hashtable = {}
 class Board():
     __slots__ = ['matrix', 'possible_moves', 'patterns',
                  'score', 'is_five_in_a_row', 'propagate_possible_moves',
-                 'hash_value', 'move', 'captures', 'stats', 'children', 'double_three']
+                 'hash_value', 'move', 'captures', 'stats', 'children',
+                 'captures_weight']
 
     def __init__(self, empty=True):
         if not empty:
-            self.matrix = np.zeros((19, 19), dtype=int)
+            self.matrix = np.zeros((19, 19), dtype=np.int8)
             self.move = None
             self.captures = EMPTY_CAPTURES_DICTIONARY
             self.patterns = [0] * ((19 + 37) * 2)
@@ -51,10 +52,13 @@ class Board():
             self.possible_moves = None
             self.score = 0
             self.is_five_in_a_row = None
+            self.captures_weight = {
+                WHITE: 1,
+                BLACK: 1
+            }
         self.children = {}
         self.hash_value = None
         self.propagate_possible_moves = True
-        self.double_three = False
 
     def __find_captures(self, move: Move):
         y, x = move.position
@@ -70,7 +74,7 @@ class Board():
                     yield (i, j)
 
     @staticmethod
-    @cache
+    # @cache
     def __get_pattern_indices_and_places_for_position(y, x):
         main_diagonal_power = 18 - max(x, y)
         secondary_diagonal_power = 18 - max(18 - y, x)
@@ -144,11 +148,11 @@ class Board():
 
     def __evaluate_stats(self) -> None:
         self.is_five_in_a_row = any(self.stats[WHITE]['five_in_a_rows'] + self.stats[BLACK]['five_in_a_rows'])
-        self.double_three = True if self.stats[self.move.color]['free_threes'].count(True) > 1 else False
 
     def get_captures_score(self):
         return PatternsValue[Patterns.CAPTURE] * \
-            (self.captures[WHITE] - self.captures[BLACK])
+            (self.captures[WHITE] * self.captures_weight[WHITE] - \
+            self.captures[BLACK] * self.captures_weight[BLACK])
 
     def __record_captures(self, move: Move) -> int:
         y, x = move.position
@@ -163,13 +167,20 @@ class Board():
             self.__update_patterns(Move(EMPTY, capture_position_1, move.opposite_color))
             self.__update_patterns(Move(EMPTY, capture_position_2, move.opposite_color))
 
-    def record_new_move(self, position, color) -> Board:
+    def record_new_move(self, position, color, update_strategy=False) -> Board:
         if position in self.children:
             new_board_state = self.children[position]
         else:
             new_board_state = self.actually_record_new_move(position, color)
 
+        if update_strategy:
+            new_board_state.__update_strategy()
+
         return new_board_state
+
+    def __update_strategy(self):
+        self.captures_weight[WHITE] = 1 + self.captures[WHITE] / 9
+        self.captures_weight[BLACK] = 1 + self.captures[BLACK] / 9
 
     def actually_record_new_move(self, position, color):
         if self.matrix[position] != EMPTY:
@@ -208,8 +219,11 @@ class Board():
                     stone = '○' if element == BLACK else '●'
                 print(stone, end='  ')
             print()
-        for move, child in self.children.items():
-            print(move, child.score, sep='  \t')
+        # print(self.captures)
+        # print(self.captures_weight)
+        # print(self.get_captures_score())
+        # for move, child in self.children.items():
+        #     print(move, child.score, sep='  \t')
 
     def order_children_by_score(self, maximizing):
         return sorted(self.children.items(), key=lambda item: item[1].score, reverse=maximizing)
@@ -282,6 +296,7 @@ class Board():
                 'free_threes': [False] * ((19 + 37) * 2),
             }
         }
+        new_board.captures_weight = self.captures_weight.copy()
         return new_board
 
 

@@ -9,7 +9,7 @@ class Game():
         self.is_over = False
 
     def record_new_move(self, move: Move) -> None:
-        self.board = self.board.record_new_move(move.position, move.color)
+        self.board = self.board.record_new_move(move.position, move.color, True)
         self.is_over = self.board.check_if_over()
 
     def dump(self):

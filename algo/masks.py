@@ -15,10 +15,10 @@ Patterns = Enum(
 )
 
 PatternsValue = {
-    Patterns.AX_DEVELOPING_TO_2       : 1,
-    Patterns.AX_DEVELOPING_TO_3       : 10,
-    Patterns.AX_DEVELOPING_TO_4       : 100,
-    Patterns.POTENTIAL_CAPTURE        : 1000,
+    Patterns.POTENTIAL_CAPTURE        : 1,
+    Patterns.AX_DEVELOPING_TO_2       : 10,
+    Patterns.AX_DEVELOPING_TO_3       : 100,
+    Patterns.AX_DEVELOPING_TO_4       : 1000,
     Patterns.FREE_3                   : 10000,
     Patterns.FREE_4                   : 1000000,
     Patterns.CAPTURE                  : 10000000,
