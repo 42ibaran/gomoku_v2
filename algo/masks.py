@@ -20,9 +20,9 @@ PatternsValue = {
     Patterns.AX_DEVELOPING_TO_3       : 100,
     Patterns.AX_DEVELOPING_TO_4       : 1000,
     Patterns.FREE_3                   : 10000,
+    Patterns.CAPTURE                  : 200000,
     Patterns.FREE_4                   : 1000000,
-    Patterns.CAPTURE                  : 10000000,
-    Patterns.FIVE_IN_A_ROW            : 100000000,
+    Patterns.FIVE_IN_A_ROW            : float('inf'),
 }
 
 MASKS_WHITE = {
@@ -91,7 +91,7 @@ MASKS_BLACK = {
     5: {
         Patterns.FIVE_IN_A_ROW: [
             242,
-        ], 
+        ],
         Patterns.AX_DEVELOPING_TO_4: [
             80,
             188,

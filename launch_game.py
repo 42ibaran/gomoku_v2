@@ -1,11 +1,16 @@
 import argparse
 from algo.maximilian import get_next_move, start_background_search, end_background_search
 from algo.board import save_hashtables
-from algo.constants import WHITE, BLACK, EMPTY, COLOR_DICTIONARY
+from algo.constants import WHITE, BLACK, COLOR_DICTIONARY
 from algo.errors import ForbiddenMoveError
 from algo.game import Game
 from algo.move import Move
 import cProfile
+
+def exit_game():
+    save_hashtables()
+    print("\nGood bye!")
+    exit(0)
 
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -20,19 +25,21 @@ def get_arguments():
 
 def get_and_record_human_move(game: Game, last_move=None):
     move_color = last_move.opposite_color if last_move else BLACK
-    bg_process = start_background_search(game.board)
+    bg_process, event, queue = start_background_search(game.board) # if suggestions or vs_max else None, None, None
     while True:
         try:
             move_position = input("Where would you like to play? <pos_y pos_x> : ")
             human_move = Move(move_color, move_position)
-            end_background_search(bg_process)
+            board = end_background_search(bg_process, event, queue)
+            if board is not None:
+                game.board = board
             game.record_new_move(human_move)
             break
         except (ForbiddenMoveError, ValueError) as e:
             print(e)
         except KeyboardInterrupt:
-            end_background_search(bg_process)
-            exit(0)
+            end_background_search(bg_process, event, queue)
+            exit_game()
     return human_move
 
 def print_turn(human_turn, last_move):
@@ -77,11 +84,8 @@ if __name__ == "__main__":
     terminal, human_vs_maximilian, suggestion, human_as_white, intelligent = get_arguments()
     if (terminal):
         try:
-            # load_hashtables()
             play_in_terminal(human_vs_maximilian, suggestion, human_as_white, intelligent)
         except KeyboardInterrupt:
-            pass
-        save_hashtables()
+            exit_game()
     else:
         print("LAUNCH GAME ON WEB HEHE BISOUS :)")
-    print("\nGood bye!")

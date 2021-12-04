@@ -155,6 +155,10 @@ class Board():
         self.is_five_in_a_row = any(self.stats[WHITE]['five_in_a_rows'] + self.stats[BLACK]['five_in_a_rows'])
 
     def get_captures_score(self) -> int:
+        if self.captures[WHITE] == 5:
+            return float('inf')
+        if self.captures[BLACK] == 5:
+            return float('-inf')
         return PatternsValue[Patterns.CAPTURE] * \
             (self.captures[WHITE] * self.captures_weight[WHITE] - \
             self.captures[BLACK] * self.captures_weight[BLACK])
@@ -184,8 +188,8 @@ class Board():
         return new_board_state
 
     def update_strategy(self) -> None:
-        self.captures_weight[WHITE] = 1 + self.captures[WHITE] / 9
-        self.captures_weight[BLACK] = 1 + self.captures[BLACK] / 9
+        self.captures_weight[WHITE] = 1 + self.captures[WHITE] / 4
+        self.captures_weight[BLACK] = 1 + self.captures[BLACK] / 4
 
     def actually_record_new_move(self, position: tuple[int, int], color: int) -> Board:
         if self.matrix[position] != EMPTY:
@@ -224,6 +228,7 @@ class Board():
                     stone = '○' if element == BLACK else '●'
                 print(stone, end='  ')
             print()
+        print(self.score)
 
     def order_children_by_score(self, maximizing: bool) -> list[tuple[Move, Board]]:
         return sorted(self.children.items(), key=lambda item: item[1].score, reverse=maximizing)
@@ -243,7 +248,7 @@ class Board():
             list_of_sets_of_positions = [ self.get_possible_moves_for_position(i, j) for i, j in full_cells_indices ]
             self.possible_moves = set().union(*list_of_sets_of_positions)
 
-    def get_possible_moves_for_position(self, y: int, x: int) -> set[tuple[int]]:
+    def get_possible_moves_for_position(self, y: int, x: int) -> Generator[tuple[int, int]]:
         for i in range(y - 1, y + 2):
             if i < 0 or i > 18:
                 continue
@@ -264,8 +269,8 @@ class Board():
         self.possible_moves -= forbidden_moves
 
     def check_if_over(self) -> bool:
-        if self.captures[WHITE] >= 10 or \
-           self.captures[BLACK] >= 10:
+        if self.captures[WHITE] >= 5 or \
+           self.captures[BLACK] >= 5:
             return True
         if not self.is_five_in_a_row:
             return False
