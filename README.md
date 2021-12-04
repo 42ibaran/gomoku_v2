@@ -2,18 +2,18 @@
 by Cristina Fernández Bornay & Ivan Baran.
 ___
 ### Table of contents:
-1. [ℹ️ Description](##ℹ️-Description)
-    1. [🖥️ 4️2](###🖥️-4️2)
-    2. [🧮 What is Gomoku](###🧮-What-is-Gomoku)
-    3. [🤹🏽 Playing modes](###🤹🏽-Playing-modes)
-2. [🤖 Play on terminal](##🤖-Play-on-terminal)
-    1. [🔨 Installation](###🔨-Installation)
-    2. [🏄🏽‍♀️ Usage](###🏄🏽‍♀️-Usage)
-3. [🔥 Play on web](##🔥-Play-on-web)
-    1. [🔨 Installation](###🔨-Installation)
-    2. [🏄🏽‍♀️ Usage](###🏄🏽‍♀️-Usage)
-4. [Testing](##Testing)
-5. [License](##License)
+1. [ℹ️ Description](https://github.com/42ibaran/gomoku_v2#1-%E2%84%B9%EF%B8%8F-description)
+    1. [🖥️ 4️2](https://github.com/42ibaran/gomoku_v2#11-%EF%B8%8F-4%EF%B8%8F2)
+    2. [🧮 What is Gomoku](https://github.com/42ibaran/gomoku_v2#12--what-is-gomoku)
+    3. [🤹🏽 Playing modes](https://github.com/42ibaran/gomoku_v2#13-playing-modes)
+2. [🤖 Play on terminal](https://github.com/42ibaran/gomoku_v2#2--play-on-terminal)
+    1. [🔨 Installation](https://github.com/42ibaran/gomoku_v2#21--installation)
+    2. [🏄🏽‍♀️ Usage](https://github.com/42ibaran/gomoku_v2#22--usage)
+3. [🔥 Play on web](https://github.com/42ibaran/gomoku_v2#3--play-on-web)
+    1. [🔨 Installation](https://github.com/42ibaran/gomoku_v2#31--installation)
+    2. [🏄🏽‍♀️ Usage](https://github.com/42ibaran/gomoku_v2#32--usage)
+4. [Testing](https://github.com/42ibaran/gomoku_v2#4-testing)
+5. [License](https://github.com/42ibaran/gomoku_v2#5-license)
 ___
 ## 1. ℹ️ **Description**
 
@@ -116,7 +116,7 @@ ___
 - Run the program. Ex: `python3 launch_game.py -tms`.
 
 **Use a dev container:**
-- 
+- lolol
 
 **Use Docker:**
 - Check that Docker is properly installed and running.
