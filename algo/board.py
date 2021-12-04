@@ -1,13 +1,13 @@
 from __future__ import annotations
+from typing import Generator
 
 import numpy as np
 import pickle
 from hashlib import sha1
-# from functools import cache
 from .move import Move
 from .constants import EMPTY, WHITE, BLACK, PATTERN_SIZES, \
                        EMPTY_CAPTURES_DICTIONARY
-from .errors import ForbiddenMoveError, ForbiddenMoveError
+from .errors import ForbiddenMoveError
 from .masks import Patterns, PatternsValue, MASKS_WHITE, MASKS_BLACK
 
 # Patterns list explanation:
@@ -23,15 +23,19 @@ PATTERN_COLUMN         = 0 + 19
 PATTERN_MAIN_DIAG      = 0 + 19 + 19
 PATTERN_SECONDARY_DIAG = 0 + 19 + 19 + 37
 
-pattern_evaluation_hashtable = {}
+try:
+    pattern_evaluation_hashtable = pickle.load(open("pattern_evaluation_hashtable.pickle", "rb"))
+except FileNotFoundError:
+    print("Hmm, pattern_evaluation_hashtable pickle file not found?")
+    pattern_evaluation_hashtable = {}
 
 class Board():
     __slots__ = ['matrix', 'possible_moves', 'patterns',
                  'score', 'is_five_in_a_row', 'propagate_possible_moves',
                  'hash_value', 'move', 'captures', 'stats', 'children',
-                 'captures_weight']
+                 'captures_weight', 'depth', 'minmax_score']
 
-    def __init__(self, empty=True):
+    def __init__(self, empty: bool=True):
         if not empty:
             self.matrix = np.zeros((19, 19), dtype=np.int8)
             self.move = None
@@ -56,11 +60,13 @@ class Board():
                 WHITE: 1,
                 BLACK: 1
             }
+        self.minmax_score = None
+        self.depth = -1
         self.children = {}
         self.hash_value = None
         self.propagate_possible_moves = True
 
-    def __find_captures(self, move: Move):
+    def __find_captures(self, move: Move) -> Generator[tuple[int, int]]:
         y, x = move.position
         for i in range(-1, 2):
             if y + 3*i < 0 or y + 3*i >= 18:
@@ -74,8 +80,7 @@ class Board():
                     yield (i, j)
 
     @staticmethod
-    # @cache
-    def __get_pattern_indices_and_places_for_position(y, x):
+    def __get_pattern_indices_and_places_for_position(y: int, x: int) -> list[tuple[int, int]]:
         main_diagonal_power = 18 - max(x, y)
         secondary_diagonal_power = 18 - max(18 - y, x)
 
@@ -86,7 +91,7 @@ class Board():
             (PATTERN_SECONDARY_DIAG + x + y, secondary_diagonal_power),
         ]
 
-    def __update_patterns(self, move: Move) -> None:
+    def update_patterns(self, move: Move) -> None:
         y, x = move.position
         color = move.color if move.color != EMPTY else -move.previous_color
         for index, place in self.__get_pattern_indices_and_places_for_position(y, x):
@@ -95,14 +100,14 @@ class Board():
             if move.color != EMPTY and self.stats[color]['free_threes'].count(True) > 1:
                 raise ForbiddenMoveError("Go fuck yourself somewhere else, double free-three.")
 
-    def evaluate_pattern(self, index):
+    def evaluate_pattern(self, index: int) -> None:
         self.stats[WHITE]['scores'][index] = self.stats[BLACK]['scores'][index] = 0
-        if self.retreive_hashed_pattern_evaluation(index):
+        if self.update_pattern_score_from_hash(index):
             return
         self.actually_evaluate_pattern(index)
         self.save_pattern_evaluation(index)
 
-    def actually_evaluate_pattern(self, index):
+    def actually_evaluate_pattern(self, index: int) -> bool:
         for (mask_size, masks_w), masks_b in zip(MASKS_WHITE.items(), MASKS_BLACK.values()):
             pattern = self.patterns[index]
             pattern_size = PATTERN_SIZES[index]
@@ -122,7 +127,7 @@ class Board():
                 pattern //= 3
                 pattern_size -= 1
 
-    def retreive_hashed_pattern_evaluation(self, index):
+    def update_pattern_score_from_hash(self, index: int) -> bool:
         hashval = hash((self.patterns[index], PATTERN_SIZES[index]))
         if hashval in pattern_evaluation_hashtable:
             self.stats[WHITE]['scores'][index], \
@@ -134,7 +139,7 @@ class Board():
             return True
         return False
 
-    def save_pattern_evaluation(self, index):
+    def save_pattern_evaluation(self, index: int) -> None:
         hashval = hash((self.patterns[index], PATTERN_SIZES[index]))
         pattern_evaluation_hashtable[hashval] = self.stats[WHITE]['scores'][index], \
             self.stats[BLACK]['scores'][index], \
@@ -143,18 +148,18 @@ class Board():
             self.stats[WHITE]['free_threes'][index], \
             self.stats[BLACK]['free_threes'][index]
 
-    def __evaluate_score(self) -> None:
+    def evaluate_score(self) -> None:
         self.score = self.get_captures_score() + sum(self.stats[WHITE]['scores'] + self.stats[BLACK]['scores'])
 
-    def __evaluate_stats(self) -> None:
+    def evaluate_stats(self) -> None:
         self.is_five_in_a_row = any(self.stats[WHITE]['five_in_a_rows'] + self.stats[BLACK]['five_in_a_rows'])
 
-    def get_captures_score(self):
+    def get_captures_score(self) -> int:
         return PatternsValue[Patterns.CAPTURE] * \
             (self.captures[WHITE] * self.captures_weight[WHITE] - \
             self.captures[BLACK] * self.captures_weight[BLACK])
 
-    def __record_captures(self, move: Move) -> int:
+    def record_captures(self, move: Move) -> None:
         y, x = move.position
         for i, j in self.__find_captures(move):
             self.captures[move.color] += 1
@@ -164,35 +169,35 @@ class Board():
             move.captures.add(capture_position_2)
             self.matrix[capture_position_1] = EMPTY
             self.matrix[capture_position_2] = EMPTY
-            self.__update_patterns(Move(EMPTY, capture_position_1, move.opposite_color))
-            self.__update_patterns(Move(EMPTY, capture_position_2, move.opposite_color))
+            self.update_patterns(Move(EMPTY, capture_position_1, move.opposite_color))
+            self.update_patterns(Move(EMPTY, capture_position_2, move.opposite_color))
 
-    def record_new_move(self, position, color, update_strategy=False) -> Board:
+    def record_new_move(self, position: tuple[int, int], color: int, update_strategy: bool=False) -> Board:
         if position in self.children:
             new_board_state = self.children[position]
         else:
             new_board_state = self.actually_record_new_move(position, color)
 
         if update_strategy:
-            new_board_state.__update_strategy()
+            new_board_state.update_strategy()
 
         return new_board_state
 
-    def __update_strategy(self):
+    def update_strategy(self) -> None:
         self.captures_weight[WHITE] = 1 + self.captures[WHITE] / 9
         self.captures_weight[BLACK] = 1 + self.captures[BLACK] / 9
 
-    def actually_record_new_move(self, position, color):
+    def actually_record_new_move(self, position: tuple[int, int], color: int) -> Board:
         if self.matrix[position] != EMPTY:
             raise ForbiddenMoveError("The cell is already taken you dum-dum.")
         new_board_state = self.__copy()
         new_board_state.matrix[position] = color
         new_board_state.move = Move(color, position)
-        new_board_state.__update_patterns(new_board_state.move)
-        new_board_state.__evaluate_stats()
-        new_board_state.__record_captures(new_board_state.move)
-        new_board_state.__get_possible_moves(self.possible_moves if self.propagate_possible_moves else None)
-        new_board_state.__evaluate_score()
+        new_board_state.update_patterns(new_board_state.move)
+        new_board_state.evaluate_stats()
+        new_board_state.record_captures(new_board_state.move)
+        new_board_state.get_possible_moves(self.possible_moves if self.propagate_possible_moves else None)
+        new_board_state.evaluate_score()
 
         return new_board_state
 
@@ -219,16 +224,11 @@ class Board():
                     stone = '○' if element == BLACK else '●'
                 print(stone, end='  ')
             print()
-        # print(self.captures)
-        # print(self.captures_weight)
-        # print(self.get_captures_score())
-        # for move, child in self.children.items():
-        #     print(move, child.score, sep='  \t')
 
-    def order_children_by_score(self, maximizing):
+    def order_children_by_score(self, maximizing: bool) -> list[tuple[Move, Board]]:
         return sorted(self.children.items(), key=lambda item: item[1].score, reverse=maximizing)
 
-    def __get_possible_moves(self, previous_possible_moves) -> None:
+    def get_possible_moves(self, previous_possible_moves: set[tuple[int, int]]) -> None:
         if previous_possible_moves:
             y, x = self.move.position
             self.possible_moves = {
@@ -253,7 +253,7 @@ class Board():
                 if self.matrix[i][j] == EMPTY:
                     yield i, j
 
-    def build_children(self):
+    def build_children(self) -> None:
         forbidden_moves = set()
         for possible_move in self.possible_moves:
             try:
@@ -263,7 +263,7 @@ class Board():
                 forbidden_moves.add(possible_move)
         self.possible_moves -= forbidden_moves
 
-    def check_if_over(self):
+    def check_if_over(self) -> bool:
         if self.captures[WHITE] >= 10 or \
            self.captures[BLACK] >= 10:
             return True
@@ -278,7 +278,7 @@ class Board():
                 self.possible_moves.add(move)
         return not can_be_undone
 
-    def __copy(self):
+    def __copy(self) -> Board:
         new_board = Board()
         new_board.matrix = self.matrix.copy()
         new_board.captures = self.captures.copy()
@@ -302,11 +302,3 @@ class Board():
 
 def save_hashtables():
     pickle.dump(pattern_evaluation_hashtable, open("pattern_evaluation_hashtable.pickle", "wb"))
-
-def load_hashtables():
-    global pattern_evaluation_hashtable
-    try:
-        pattern_evaluation_hashtable = pickle.load(open("pattern_evaluation_hashtable.pickle", "rb"))
-    except FileNotFoundError:
-        print("Hmm, pattern_evaluation_hashtable pickle file not found?")
-        pattern_evaluation_hashtable = {}
