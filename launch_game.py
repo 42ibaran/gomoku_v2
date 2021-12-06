@@ -5,12 +5,15 @@ from algo.constants import WHITE, BLACK, COLOR_DICTIONARY
 from algo.errors import ForbiddenMoveError
 from algo.game import Game
 from algo.move import Move
-import cProfile
 
 def exit_game():
     save_hashtables()
     print("\nGood bye!")
     exit(0)
+
+def game_over():
+    print("Game over.")
+    exit_game()
 
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -18,27 +21,27 @@ def get_arguments():
     parser.add_argument("-m", "--maximilian", action='store_true', help="Play against Maximilian.")
     parser.add_argument("-s", "--suggestion", action='store_true', help="Receive Maximilian' suggestions.")
     parser.add_argument("-w", "--white", action='store_true', help="Play as white (2nd turn).")
-    parser.add_argument("-i", "--intelligent", action='store_true', help="Use The I.Max aka. The Intelligent Maximilian\n[default option The MP.Max. aka. The Max Power Maximilian]")
     arguments = parser.parse_args()
-    white = arguments.white if arguments.maximilian else False
-    return arguments.terminal, arguments.maximilian, arguments.suggestion, white, arguments.intelligent
+    if arguments.white and not arguments.maximilian:
+        parser.error("Option -w requires option -m.")
+    return arguments
 
 def get_and_record_human_move(game: Game, last_move=None):
     move_color = last_move.opposite_color if last_move else BLACK
-    # bg_process, event, queue = start_background_search(game.board) # if suggestions or vs_max else None, None, None
+    bg_process, event, queue = start_background_search(game.board) # if suggestions or vs_max else None, None, None
     while True:
         try:
             move_position = input("Where would you like to play? <pos_y pos_x> : ")
             human_move = Move(move_color, move_position)
-            # board = end_background_search(bg_process, event, queue)
-            # if board is not None:
-                # game.board = board
+            board = end_background_search(bg_process, event, queue)
+            if board is not None:
+                game.board = board
             game.record_new_move(human_move)
             break
         except (ForbiddenMoveError, ValueError) as e:
             print(e)
         except KeyboardInterrupt:
-            # end_background_search(bg_process, event, queue)
+            end_background_search(bg_process, event, queue)
             exit_game()
     return human_move
 
@@ -51,14 +54,10 @@ def print_maximilian_move(position, time, is_suggestion):
     move_type = "suggestion" if is_suggestion else "move"
     print("Maximilian's {}: {}\nTime: {:.3f}\n".format(move_type, position, time))
 
-def game_over_bitch():
-    print("It's over bitch.")
-
-def play_in_terminal(human_vs_maximilian, suggestion, human_as_white, intelligent):
-    print(intelligent)
+def play_in_terminal(params):
     last_move = None
     game = Game()
-    human_turn = False if human_as_white else True
+    human_turn = not params.white
     turn = 1
     while True:
         print_turn(human_turn, last_move)
@@ -68,22 +67,22 @@ def play_in_terminal(human_vs_maximilian, suggestion, human_as_white, intelligen
             game.record_new_move(last_move)
             human_turn = True
         else:
-            if suggestion:
+            if params.suggestion:
                 suggestion_maximilian, time_maximilian = get_next_move(game.board)
                 print_maximilian_move(suggestion_maximilian.position, time_maximilian, True)
             last_move = get_and_record_human_move(game, last_move)
-            human_turn = False if human_vs_maximilian else True
+            human_turn = False if params.maximilian else True
         game.dump()
         print("TURN: {}".format(turn))
         turn += 1 if last_move.color == WHITE else 0
         if game.is_over:
-            return game_over_bitch()
+            return game_over()
 
 if __name__ == "__main__":
-    terminal, human_vs_maximilian, suggestion, human_as_white, intelligent = get_arguments()
-    if (terminal):
+    params = get_arguments()
+    if (params.terminal):
         try:
-            play_in_terminal(human_vs_maximilian, suggestion, human_as_white, intelligent)
+            play_in_terminal(params)
         except KeyboardInterrupt:
             exit_game()
     else:

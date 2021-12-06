@@ -98,7 +98,7 @@ class Board():
             self.patterns[index] += color * (3 ** place)
             self.evaluate_pattern(index)
             if move.color != EMPTY and self.stats[color]['free_threes'].count(True) > 1:
-                raise ForbiddenMoveError("Go fuck yourself somewhere else, double free-three.")
+                raise ForbiddenMoveError("Double free-three.")
 
     def evaluate_pattern(self, index: int) -> None:
         self.stats[WHITE]['scores'][index] = self.stats[BLACK]['scores'][index] = 0
@@ -160,8 +160,8 @@ class Board():
         if self.captures[BLACK] == 5:
             return float('-inf')
         return PatternsValue[Patterns.CAPTURE] * \
-            (self.captures[WHITE] * self.captures_weight[WHITE] - \
-            self.captures[BLACK] * self.captures_weight[BLACK])
+            (self.captures[WHITE] - self.captures[BLACK]) * \
+            self.captures_weight[self.move.color]
 
     def record_captures(self, move: Move) -> None:
         y, x = move.position
@@ -193,7 +193,7 @@ class Board():
 
     def actually_record_new_move(self, position: tuple[int, int], color: int) -> Board:
         if self.matrix[position] != EMPTY:
-            raise ForbiddenMoveError("The cell is already taken you dum-dum.")
+            raise ForbiddenMoveError("The cell is already taken.")
         new_board_state = self.__copy()
         new_board_state.matrix[position] = color
         new_board_state.move = Move(color, position)
