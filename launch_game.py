@@ -25,20 +25,20 @@ def get_arguments():
 
 def get_and_record_human_move(game: Game, last_move=None):
     move_color = last_move.opposite_color if last_move else BLACK
-    bg_process, event, queue = start_background_search(game.board) # if suggestions or vs_max else None, None, None
+    # bg_process, event, queue = start_background_search(game.board) # if suggestions or vs_max else None, None, None
     while True:
         try:
             move_position = input("Where would you like to play? <pos_y pos_x> : ")
             human_move = Move(move_color, move_position)
-            board = end_background_search(bg_process, event, queue)
-            if board is not None:
-                game.board = board
+            # board = end_background_search(bg_process, event, queue)
+            # if board is not None:
+                # game.board = board
             game.record_new_move(human_move)
             break
         except (ForbiddenMoveError, ValueError) as e:
             print(e)
         except KeyboardInterrupt:
-            end_background_search(bg_process, event, queue)
+            # end_background_search(bg_process, event, queue)
             exit_game()
     return human_move
 
@@ -47,11 +47,9 @@ def print_turn(human_turn, last_move):
             COLOR_DICTIONARY[last_move.opposite_color if last_move else BLACK],
             "HUMAN" if human_turn else "MAXIM"))
 
-def print_maximilian_move(position, time, depth):
-    print("Maximilian's move: {}\nTime: {:.3f}\nDepth: {}".format(position, time, depth))
-
-def print_maximilian_suggestion(position, time, depth):
-    print("Suggested move: {}\nTime: {:.3f}\nDepth: {}".format(position, time, depth))
+def print_maximilian_move(position, time, is_suggestion):
+    move_type = "suggestion" if is_suggestion else "move"
+    print("Maximilian's {}: {}\nTime: {:.3f}\n".format(move_type, position, time))
 
 def game_over_bitch():
     print("It's over bitch.")
@@ -64,21 +62,22 @@ def play_in_terminal(human_vs_maximilian, suggestion, human_as_white, intelligen
     turn = 1
     while True:
         print_turn(human_turn, last_move)
-        if human_vs_maximilian and not human_turn:
-            last_move, time_maximilian, depth = get_next_move(game.board)
-            print_maximilian_move(last_move.position, time_maximilian, depth)
+        if not human_turn:
+            last_move, time_maximilian = get_next_move(game.board)
+            print_maximilian_move(last_move.position, time_maximilian, False)
             game.record_new_move(last_move)
+            human_turn = True
         else:
             if suggestion:
-                suggestion_maximilian, time_maximilian, depth = get_next_move(game.board)
-                print_maximilian_suggestion(suggestion_maximilian.position, time_maximilian, depth)
+                suggestion_maximilian, time_maximilian = get_next_move(game.board)
+                print_maximilian_move(suggestion_maximilian.position, time_maximilian, True)
             last_move = get_and_record_human_move(game, last_move)
+            human_turn = False if human_vs_maximilian else True
         game.dump()
         print("TURN: {}".format(turn))
+        turn += 1 if last_move.color == WHITE else 0
         if game.is_over:
             return game_over_bitch()
-        human_turn = not human_turn if human_vs_maximilian else True
-        turn += 1 if last_move.color == WHITE else 0
 
 if __name__ == "__main__":
     terminal, human_vs_maximilian, suggestion, human_as_white, intelligent = get_arguments()
