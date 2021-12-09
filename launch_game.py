@@ -6,6 +6,7 @@ from algo.constants import WHITE, BLACK, COLOR_DICTIONARY
 from algo.errors import ForbiddenMoveError
 from algo.game import Game
 from algo.move import Move
+from server import app
 
 def exit_game():
     save_hashtables()
@@ -93,3 +94,4 @@ if __name__ == "__main__":
             'suggestion': params.suggestion,
             'white': params.white,
         }, open("config.json", 'w'))
+        app.run()

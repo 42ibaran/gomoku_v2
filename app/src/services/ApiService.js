@@ -14,7 +14,7 @@ export class ApiService {
             })
             return await response.json() ?? {}
         } catch(e) {
-            return {}
+            return e
         }
     }
 }
