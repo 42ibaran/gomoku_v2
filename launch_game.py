@@ -1,4 +1,5 @@
 import argparse
+import json
 from algo.maximilian import get_next_move, start_background_search, end_background_search
 from algo.board import save_hashtables
 from algo.constants import WHITE, BLACK, COLOR_DICTIONARY
@@ -87,4 +88,8 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             exit_game()
     else:
-        print("LAUNCH GAME ON WEB HEHE BISOUS :)")
+        json.dump({
+            'maximilian': params.maximilian,
+            'suggestion': params.suggestion,
+            'white': params.white,
+        }, open("config.json", 'w'))
