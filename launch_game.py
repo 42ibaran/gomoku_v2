@@ -26,9 +26,9 @@ def get_arguments():
         parser.error("Option -w requires option -m.")
     return arguments
 
-def get_and_record_human_move(game: Game, last_move=None):
+def get_and_record_human_move(game: Game, last_move: Move, is_bg_process: bool):
     move_color = last_move.opposite_color if last_move else BLACK
-    bg_process, event, queue = start_background_search(game.board) # if suggestions or vs_max else None, None, None
+    bg_process, event, queue = start_background_search(game.board) if is_bg_process else (None, None, None)
     while True:
         try:
             move_position = input("Where would you like to play? <pos_y pos_x> : ")
@@ -45,10 +45,10 @@ def get_and_record_human_move(game: Game, last_move=None):
             exit_game()
     return human_move
 
-def print_turn(human_turn, last_move):
-    print("\n=================== [{}][{}]s TURN ===================\n".format(
+def print_turn(turn, human_turn, last_move):
+    print("\n================== [{}][{}]s TURN {:02d} ==================\n".format(
             COLOR_DICTIONARY[last_move.opposite_color if last_move else BLACK],
-            "HUMAN" if human_turn else "MAXIM"))
+            "HUMAN" if human_turn else "MAXIM", turn))
 
 def print_maximilian_move(position, time, is_suggestion):
     move_type = "suggestion" if is_suggestion else "move"
@@ -59,8 +59,9 @@ def play_in_terminal(params):
     game = Game()
     human_turn = not params.white
     turn = 1
+    game.board.dump()
     while True:
-        print_turn(human_turn, last_move)
+        print_turn(turn, human_turn, last_move)
         if not human_turn:
             last_move, time_maximilian = get_next_move(game.board)
             print_maximilian_move(last_move.position, time_maximilian, False)
@@ -70,16 +71,16 @@ def play_in_terminal(params):
             if params.suggestion:
                 suggestion_maximilian, time_maximilian = get_next_move(game.board)
                 print_maximilian_move(suggestion_maximilian.position, time_maximilian, True)
-            last_move = get_and_record_human_move(game, last_move)
+            last_move = get_and_record_human_move(game, last_move, params.suggestion or params.maximilian)
             human_turn = False if params.maximilian else True
         game.dump()
-        print("TURN: {}".format(turn))
         turn += 1 if last_move.color == WHITE else 0
         if game.is_over:
             return game_over()
 
 if __name__ == "__main__":
     params = get_arguments()
+    print("\nWillkoooommen, bienvenuuuue, weeelcooomeeee\nIm Gomokuuuu, au Gomokuuuu, to Gomokuuuuuuuu 💃\n")
     if (params.terminal):
         try:
             play_in_terminal(params)

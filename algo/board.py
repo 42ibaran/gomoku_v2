@@ -217,9 +217,9 @@ class Board():
     def dump(self) -> None:
         index_0_9 = range(10)
         index_10_18 = range(10, 19)
-        print('   ' + '  '.join(map(str, index_0_9)) + ' ' + ' '.join(map(str, index_10_18)))
+        print('y\\x ' + '  '.join(map(str, index_0_9)) + ' ' + ' '.join(map(str, index_10_18)))
         for index, row in enumerate(self.matrix):
-            print(index, end=' ' * (2 - index // 10))
+            print(index, end=' ' * (1 + 2 - index // 10))
             for element in row:
                 if element == EMPTY:
                     stone = '·'

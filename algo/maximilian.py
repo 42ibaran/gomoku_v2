@@ -3,7 +3,6 @@ import time
 from .move import Move
 from .board import Board
 from .constants import WHITE, BLACK
-# from multiprocessing import Process, Event, Queue
 from threading import Thread, Event
 from queue import Queue
 
@@ -102,7 +101,6 @@ def start_background_search(board: Board) -> tuple[Thread, Event, Queue]:
     return background_process, stop_event, queue
 
 def end_background_search(background_process: Thread, stop_event: Event, queue: Queue) -> Board:
-    a = time.time()
     if background_process is None:
         return None
     stop_event.set()
@@ -111,6 +109,4 @@ def end_background_search(background_process: Thread, stop_event: Event, queue: 
         pass
     background_process.join()
     stop_event.clear()
-    b = time.time()
-    print(">>> %.5f" % (b - a))
     return board
