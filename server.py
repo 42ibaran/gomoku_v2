@@ -1,7 +1,7 @@
 import json
 from flask import Flask
 from flask import jsonify, request, make_response
-from algo.constants import BLACK
+from algo.constants import BLACK, COLOR_DICTIONARY
 from algo.maximilian import get_next_move
 from algo.move import Move
 from flask_cors import CORS
@@ -35,6 +35,7 @@ def init():
 
     if app.config['white']:
         game.record_new_move(Move(BLACK, (9, 9)))
+        print("WHITE FIRST TURN")
     return make_response(jsonify({
         'move': {
             'color': BLACK,
@@ -46,7 +47,6 @@ def init():
 @app.route('/make-move', methods=["POST"])
 def make_move():
     global app
-    data = request.get_json()
 
     if game is None:
         return message("Session not found"), 404
@@ -54,20 +54,28 @@ def make_move():
         return message("Not your turn"), 400
 
     session['move_lock'] == True
-    print(data['color'], data['position'])
+
+    data = request.get_json()
     last_move = Move(data['color'], tuple(data['position']))
+    print(f"RECEIVED DATA: {COLOR_DICTIONARY[data['color']]} -> {data['position']}")
+
     try:
         game.record_new_move(last_move)
-    except ForbiddenMoveError:
+    except ForbiddenMoveError as e:
         session['move_lock'] = False
-        return message("Forbiden move"), 400
+        return message(str(e)), 400
 
     maximilian_move = time_maximilian_move = suggestion = time_suggestion = None
     if app.config['maximilian']:
         maximilian_move, time_maximilian_move = get_next_move(game.board)
         game.record_new_move(maximilian_move)
+        print("MAXIMILIAN")
+        print(f"SENT DATA: {COLOR_DICTIONARY[maximilian_move.color]} -> {maximilian_move.position}")
     if app.config['suggestion']:
         suggestion, time_suggestion = get_next_move(game.board)
+        print("SUGGESTION")
+        print(f"SENT DATA: {maximilian_move.color} -> {maximilian_move.position}")
+
 
     response = {
         'move': {
@@ -80,7 +88,8 @@ def make_move():
             'color': suggestion.color,
             'position': suggestion.position
         } if suggestion else None,
-        'time_suggestion': time_suggestion
+        'time_suggestion': time_suggestion,
+        'is_over': game.is_over
     }
 
     return make_response(jsonify(response)), 201

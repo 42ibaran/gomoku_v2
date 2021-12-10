@@ -177,6 +177,8 @@ class Board():
             self.update_patterns(Move(EMPTY, capture_position_2, move.opposite_color))
 
     def record_new_move(self, position: tuple[int, int], color: int, update_strategy: bool=False) -> Board:
+        if any(coordinate < 0 or coordinate > 18 for coordinate in position):
+            raise ForbiddenMoveError("Invalid position. Coordinates must be between 0 and 18")
         if position in self.children:
             new_board_state = self.children[position]
         else:
