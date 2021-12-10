@@ -8,8 +8,8 @@ const WHITE = 1
 const BLACK = 2
 const WHITE_M = 255
 const BLACK_M = 0
-const WHITE_S = 192
-const BLACK_S = 64
+const WHITE_S = 128
+const BLACK_S = 128
 const COLOR_DICTIONARY = {
   1: "WHITE",
   2: "BLACK",
@@ -43,7 +43,9 @@ export class Board extends React.Component {
 
   render() {
     return (
-      <div ref={this.boardRef}>
+      <div ref={this.boardRef} style={{
+        width: '42vw',
+        backgroundColor: 'rgba(255, 255, 255, 0.6)'}}>
       </div>
     )
   }

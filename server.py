@@ -35,7 +35,6 @@ def init():
 
     if app.config['white']:
         game.record_new_move(Move(BLACK, (9, 9)))
-        print("WHITE FIRST TURN")
     return make_response(jsonify({
         'move': {
             'color': BLACK,
@@ -57,7 +56,6 @@ def make_move():
 
     data = request.get_json()
     last_move = Move(data['color'], tuple(data['position']))
-    print(f"RECEIVED DATA: {COLOR_DICTIONARY[data['color']]} -> {data['position']}")
 
     try:
         game.record_new_move(last_move)
@@ -69,12 +67,8 @@ def make_move():
     if app.config['maximilian']:
         maximilian_move, time_maximilian_move = get_next_move(game.board)
         game.record_new_move(maximilian_move)
-        print("MAXIMILIAN")
-        print(f"SENT DATA: {COLOR_DICTIONARY[maximilian_move.color]} -> {maximilian_move.position}")
     if app.config['suggestion']:
         suggestion, time_suggestion = get_next_move(game.board)
-        print("SUGGESTION")
-        print(f"SENT DATA: {maximilian_move.color} -> {maximilian_move.position}")
 
 
     response = {

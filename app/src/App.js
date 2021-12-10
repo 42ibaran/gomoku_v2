@@ -5,6 +5,7 @@ import React from 'react';
 import Grid from '@material-ui/core/Grid';
 // import Paper from '@material-ui/core/Paper';
 import { Board } from './components/BoardComponent';
+import background from './cat.png';
 
 // import socketIOClient from "socket.io-client";
 
@@ -50,10 +51,17 @@ class App extends React.Component {
     let board = <Board></Board>
     // }
     return (
-      <div className="App">
-        <Grid container spacing={2}>
+
+      <div className="App" style={{
+          backgroundImage: `url(${background})`,
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
+          width: '100vw',
+          height: '100vh'}}>
+        <Grid container>
           <Grid item xs={12}>
-            <Grid container justify="center" spacing={2}>
+            <Grid container justify="center">
               {board}
             </Grid>
           </Grid>
