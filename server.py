@@ -22,40 +22,32 @@ def message(msg):
         'message' : msg
     }))
 
-def load_params():
-    try:
-        params = json.load(open("config.json", 'r'))
-    except FileNotFoundError as e:
-        print(e)
-        exit()
-    return params
-
 @app.route('/')
 def home():
     return "", 200
 
 @app.route('/init', methods=["POST"])
 def init():
-    global game, params
+    global app, game, params
 
     game = Game()
     session['move_lock'] = False
-    params = load_params()
-    print(params)
-    if params['white']:
+
+    if app.config['white']:
         game.record_new_move(Move(BLACK, (9, 9)))
     return make_response(jsonify({
         'move': {
             'color': BLACK,
             'position': (9, 9)
-        } if params['white'] else None,
+        } if app.config['white'] else None,
         'board': game.board.matrix.tolist()
     })), 201
 
 @app.route('/make-move', methods=["POST"])
 def make_move():
+    global app
     data = request.get_json()
-    
+
     if game is None:
         return message("Session not found"), 404
     if 'move_lock' in session and session['move_lock'] == True:
@@ -71,10 +63,10 @@ def make_move():
         return message("Forbiden move"), 400
 
     maximilian_move = time_maximilian_move = suggestion = time_suggestion = None
-    if params['maximilian']:
+    if app.config['maximilian']:
         maximilian_move, time_maximilian_move = get_next_move(game.board)
         game.record_new_move(maximilian_move)
-    if params['suggestion']:
+    if app.config['suggestion']:
         suggestion, time_suggestion = get_next_move(game.board)
 
     response = {

@@ -89,9 +89,7 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             exit_game()
     else:
-        json.dump({
-            'maximilian': params.maximilian,
-            'suggestion': params.suggestion,
-            'white': params.white,
-        }, open("config.json", 'w'))
+        app.config['maximilian'] = params.maximilian
+        app.config['suggestion'] = params.suggestion
+        app.config['white'] = params.white
         app.run()
