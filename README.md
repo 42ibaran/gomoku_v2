@@ -1,42 +1,42 @@
 # 🔥 Welcome to Gomoku 🔥
-by Cristina Fernández Bornay & Ivan Baran.
+by [Ivan Baran](https://github.com/42ibaran) & [Cristina Fernández Bornay](https://github.com/CristinaFdezBornay).
 ___
 ### Table of contents:
-1. [ℹ️ Description](##ℹ️-Description)
-    1. [🖥️ 4️2](###🖥️-4️2)
-    2. [🧮 What is Gomoku](###🧮-What-is-Gomoku)
-    3. [🤹🏽 Playing modes](###🤹🏽-Playing-modes)
-2. [🤖 Play on terminal](##🤖-Play-on-terminal)
-    1. [🔨 Installation](###🔨-Installation)
-    2. [🏄🏽‍♀️ Usage](###🏄🏽‍♀️-Usage)
-3. [🔥 Play on web](##🔥-Play-on-web)
-    1. [🔨 Installation](###🔨-Installation)
-    2. [🏄🏽‍♀️ Usage](###🏄🏽‍♀️-Usage)
-4. [Testing](##Testing)
-5. [License](##License)
+1. ℹ️ Description
+    1. 🖥️ 4️2
+    2. 🧮 What is Gomoku
+    3. 🤹🏽 Playing modes
+2. 🤖 Play on terminal
+    1. 🔨 Installation
+    2. 🏄🏽‍♀️ Usage
+3. 🔥 Play on web
+    1. 🔨 Installation
+    2. 🏄🏽‍♀️ Usage
+4. Testing
+5. License
 ___
 ## 1. ℹ️ **Description**
 
 This is an application presented as a solution for the 42 Gomoku project.
 
 It involves creating a Gomoku game integrating an AI player capable of beating a human
-player the fastest way possible. To do this, you will implement a min-max algorithm but
-also do research, trial and error to find the most adapted heuristics.
+player the fastest way possible. To do this, we have implemented a min-max algorithm and
+the most adapted heuristics.
 
-### 1.1. 🖥️ **4️2**
+### 1.1. 🖥️ **What is 4️2**
 
 42 is a future-proof computer science training to educate the next generation of
 software engineers. The 42 program takes a project-based approach to progress and
 is designed to develop technical and people skills that match the expectations of
 the labor market.
 
-[Find more in the website!](https://42.fr/en/homepage/)
+[Find out more in the website!](https://42.fr/en/homepage/)
 
 ### 1.2. 🧮 **What is Gomoku**
 
 [Gomoku](https://en.wikipedia.org/wiki/Gomoku) is a strategy board game traditionally
 played on a [Go](https://en.wikipedia.org/wiki/Go_%28game%29) board with stones of
-two different colors: black [ ○ ] and white [ ● ].
+two different colors: black [ ● ] and white [ ○ ].
 
 Two players take turns placing stones of their color on an intersection of the board,
 and the game ends when one player manages to align five stones. Gomoku will be played
@@ -48,11 +48,11 @@ we play with the following additional rules:
 You can remove a pair of your opponent’s stones from the board by flanking them with your own stones.
 **If you manage to capture 10 stones, meaning 5 captures, you win!!**
 
-Ex: in this board => [ ○ ● ● _ ]; if blacks played [ ○ ● ● ○ ] => the result will be [ ○ _ _ ○ ].
+Ex: in this board => [ ○ ● ● _ ]; if whites played [ ○ ● ● ○ ] => the result will be [ ○ _ _ ○ ].
 
 Also, you can move into a position that leads to a capture pattern but it will not have any effect.
 
-Ex: in this board => [ ○ ● _ ○ ]; if whites played [ ○ ● ● ○ ] => the result will be [ ○ ● ● ○ ].
+Ex: in this board => [ ○ ● _ ○ ]; if blacks played [ ○ ● ● ○ ] => the result will be [ ○ ● ● ○ ].
 
 2. Double free-three
 
@@ -69,8 +69,8 @@ Well, **it is completely forbidden to introduce a double free-three**.
 
 As explained above, a player that manages to align five stones wins! The exception comes
 when introducing the captures: if the opponent can break this alignment by capturing a pair,
-the game continues. Also, even if a player has 5 in a row, if the opponent can capture their
-5th pair in the next move, they win if they play that move.
+the game continues. Also, even if a player has 5 in a row, but the opponent can capture a 5th
+pair in the next move, the opponent wins if playing that move.
 
 ### 1.3. **Playing modes**
 
@@ -83,26 +83,26 @@ to receive suggestions or not, as you wish.
 
 You should choose this option if your pals are not very good at playing Gomoku and you are
 already bored of them. Maximilian is an incredible AI designed to beat you in less than
-half a second by taking into account the best move based on the current and future board and
+half a second by taking into account the best move based on the current and future boards and
 the way you play!
 
 3. White 🤍 vs. 🖤 Black
 
-When playing against Maximilian, by default you will play Blacks [ ○ ], so you will start playing.
-Therefore, you one attacking an Maximilian will have to defend itself, event it will win anyway.
+When playing against Maximilian, by default you will play Blacks [ ● ], so you will start playing.
+Therefore, you are the one attacking, and Maximilian will have to defend itself, it will win anyway...
 
 In case you don't know how to cope with confrontation and your preferred strategy is to defend
-instead of attacking, we have implemented an option to allow you wo play Whites [ ● ]. Be careful,
-Maximilian is also good at attacking!!
+instead of attacking, we have implemented an option to allow you to play Whites [ ○ ]. Be careful,
+Maximilian is also better than you at attacking!!
 
 4. Receive suggestions?
 
 As mentioned before, you and your pals can choose to receive suggestions from Maximilian.
-they way we have implemented this option is by asking Maximilian to play as it was you.
-This is a great option but it has two flakes! First, if you both choose to play Max's
-suggestion, it can lead to a pretty long game. Second, get creative in the middle of the
+The way we have implemented this option is by asking Maximilian to play for you.
+This is a great option but it has two flaws! First, if you both choose to play Max's
+suggestions, it can lead to a pretty long game. Second, if you get creative in the middle of the
 game, there might me a miscommunication between your strategy and Max's one. Free advice:
-try to understand how it is trying to do!!
+try to understand what it is trying to do!!
 
 ___
 ## 2. 🤖 **Play on terminal**
@@ -116,7 +116,7 @@ ___
 - Run the program. Ex: `python3 launch_game.py -tms`.
 
 **Use a dev container:**
-- 
+- lolol
 
 **Use Docker:**
 - Check that Docker is properly installed and running.
@@ -125,11 +125,11 @@ ___
 ### 2.2. 🤹🏽 **Usage**
 
 Once you have properly launched the program, it will manage the turns itself.
-You will be asked when it is your turn to introduce your desired move.
+When it is your turn, you will be asked to introduce your desired move.
 The input should be in the format: `<pos_y pos_x>`.
 
 In case you introduce an invalid position (already taken, out of the board,
-double free-three) the program will display an error and ask again and again.
+double free-three) the program will display the error and ask again.
 
 ___
 ## 3. 🔥 **Play on web**
@@ -144,4 +144,4 @@ ___
 ___
 ## 5. **License**
 
-© 2021 Copyright Ivan Baran & Cristina Fernández Bornay under the MIT License
+© 2021 Copyright [Ivan Baran](https://github.com/42ibaran) & [Cristina Fernández Bornay](https://github.com/CristinaFdezBornay) under the [MIT License](https://github.com/42ibaran/gomoku_v2/blob/master/LICENSE)
