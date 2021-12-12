@@ -105,22 +105,19 @@ game, there might me a miscommunication between your strategy and Max's one. Fre
 try to understand what it is trying to do!!
 
 ___
-## 2. 🤖 **Play on terminal**
+## 2. 🤖 **Playing time**
 
 ### 2.1. 🔨 **Installation**
 
-**Play directly on your machine:**
+**On your machine:**
 - Choose Python 3.9 as your interpreter.
 - Install the needed packages: `python3 -m pip install -r requirements.txt`.
 - To select the desired playing mode run: `python3 launch_game.py -h`.
-- Run the program. Ex: `python3 launch_game.py -tms`.
-
-**Use a dev container:**
-- lolol
+- Run the program `python3 launch_game.py -t`
 
 **Use Docker:**
 - Check that Docker is properly installed and running.
-- Run `...`
+- Miau
 
 ### 2.2. 🤹🏽 **Usage**
 
@@ -136,7 +133,29 @@ ___
 
 ### 3.1. 🔨 **Installation**
 
+- Choose Python 3.9 as your interpreter.
+- Install the needed packages: `python3 -m pip install -r requirements.txt`.
+- To select the desired playing mode run: `python3 launch_game.py -h`.
+- Run the program `python3 launch_game.py`, it launch the server to play on web.
+- Open another terminal and check that you have installed npm@6.14.15, node@14.18.0 and yarn@1.22.15.
+- Then, go into app and run the following commands:
+    - `npm i`
+    - `yarn start`
+
 ### 3.2. 🤹🏽 **Usage**
+
+Once launched it should automatically open the browser on [http://localhost:3000/](http://localhost:3000/).
+The board will be displayed and you can click on it to place your stone.
+
+Managing the options:
+- If you wanted to play whites (`-w`), a black stone will already be placed on the board and it will be your time to move.
+- If you indicated that you wanted to receive suggestions (`-s`), they'll be shown by placing a grey stone on the board. It will be removed if you prefer to move somewhere else.
+
+Error management:
+- If you put the stone on an invalid position, it will be automatically removed and a alert message will pop with the needed information.
+
+Changing options or restarting the game:
+- If at any point you want to play with a different configuration, you can stop the server and relaunch it with other parameters. Then, refresh the window and you can start playing again. Do not stop the app!!
 
 ___
 ## 4. **Testing**
