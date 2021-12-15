@@ -56,9 +56,7 @@ class App extends React.Component {
           backgroundImage: `url(${background})`,
           backgroundPosition: 'center',
           backgroundSize: 'cover',
-          backgroundRepeat: 'no-repeat',
-          width: '100vw',
-          height: '100vh'}}>
+          backgroundRepeat: 'no-repeat'}}>
         <Grid container>
           <Grid item xs={12}>
             <Grid container justify="center">

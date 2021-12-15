@@ -10,10 +10,6 @@ const WHITE_M = 255
 const BLACK_M = 0
 const WHITE_S = 128
 const BLACK_S = 128
-const COLOR_DICTIONARY = {
-  1: "WHITE",
-  2: "BLACK",
-}
 
 const COLOR_CODES = {
   1: {
@@ -43,9 +39,7 @@ export class Board extends React.Component {
 
   render() {
     return (
-      <div ref={this.boardRef} style={{
-        width: '42vw',
-        backgroundColor: 'rgba(255, 255, 255, 0.6)'}}>
+      <div ref={this.boardRef}>
       </div>
     )
   }
@@ -61,17 +55,12 @@ export class Board extends React.Component {
       await ApiService.post('/init').then(response => {
         if (response['move']) {
           move = WHITE
-          console.log("WHITE in componentDidMount")
         }
         previous_board = response['board']
       })
-
-      console.log(COLOR_DICTIONARY[move])
-
       cnv = p.createCanvas(dim, dim);
       cnv.mouseClicked(click);
-      
-      console.log("setting up")
+
       p.render_board(previous_board)
       p.noLoop()
     }
@@ -87,6 +76,7 @@ export class Board extends React.Component {
 
     p.render_board = (board) => {
       p.clear()
+      p.background(200, 200, 200, 150);
       let c = p.color(0, 0, 0, 255)
       p.stroke(c)
 
@@ -122,30 +112,21 @@ export class Board extends React.Component {
       }
 
       p.drawCircle(x, y, COLOR_CODES[move]['move'])
-      console.log("click 0")
-      console.log(COLOR_DICTIONARY[move])
-      // move = move === BLACK ? WHITE : BLACK
-      console.log("click 1")
-      console.log(COLOR_DICTIONARY[move])
       
-      console.log("make-move")
-      console.log(COLOR_DICTIONARY[move])
       ApiService.post('/make-move', {
         color: move,
         position: [y, x]
       }).then(data => {
         if (!data['board']) {
-          console.log("data['board'] === undefined")
           p.render_board(previous_board)
           alert(data['message'])
           return
         }
+        console.log("Time move: ", data['time_move'] ?? "-")
+        console.log("Time suggestion: ", data['time_suggestion'] ?? '-')
         is_over = data['is_over']
-        console.log("render board")
         p.render_board(data['board'])
         if (data['move']) {
-          console.log("data move")
-          console.log(COLOR_DICTIONARY[move])
         } else {
           move = move === BLACK ? WHITE : BLACK
         }
@@ -153,9 +134,6 @@ export class Board extends React.Component {
           let color = data['suggestion']['color']
           let y_sugg = data['suggestion']['position'][0]
           let x_sugg = data['suggestion']['position'][1]
-          console.log("data suggestion")
-          console.log(COLOR_DICTIONARY[data['suggestion']['color']])
-          console.log(COLOR_DICTIONARY[move])
           p.drawCircle(x_sugg, y_sugg, COLOR_CODES[color]['suggestion'])
         }
         previous_board = data['board']
