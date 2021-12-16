@@ -5,6 +5,9 @@ COPY algo ./algo
 COPY requirements.txt ./
 COPY *.py ./
 
+RUN apt-get update
+RUN apt-get -y install npm node
+
 RUN pip3 install -r requirements.txt
 RUN pip3 install .
 RUN npm install ./app
