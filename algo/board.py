@@ -98,7 +98,7 @@ class Board():
             self.patterns[index] += color * (3 ** place)
             self.evaluate_pattern(index)
             if move.color != EMPTY and self.stats[color]['free_threes'].count(True) > 1:
-                raise ForbiddenMoveError("Go fuck yourself somewhere else, double free-three.")
+                raise ForbiddenMoveError("Double free-three.")
 
     def evaluate_pattern(self, index: int) -> None:
         self.stats[WHITE]['scores'][index] = self.stats[BLACK]['scores'][index] = 0
@@ -160,8 +160,8 @@ class Board():
         if self.captures[BLACK] == 5:
             return float('-inf')
         return PatternsValue[Patterns.CAPTURE] * \
-            (self.captures[WHITE] * self.captures_weight[WHITE] - \
-            self.captures[BLACK] * self.captures_weight[BLACK])
+            (self.captures[WHITE] - self.captures[BLACK]) * \
+            self.captures_weight[self.move.color]
 
     def record_captures(self, move: Move) -> None:
         y, x = move.position
@@ -177,6 +177,8 @@ class Board():
             self.update_patterns(Move(EMPTY, capture_position_2, move.opposite_color))
 
     def record_new_move(self, position: tuple[int, int], color: int, update_strategy: bool=False) -> Board:
+        if any(coordinate < 0 or coordinate > 18 for coordinate in position):
+            raise ForbiddenMoveError("Invalid position. Coordinates must be between 0 and 18")
         if position in self.children:
             new_board_state = self.children[position]
         else:
@@ -193,7 +195,7 @@ class Board():
 
     def actually_record_new_move(self, position: tuple[int, int], color: int) -> Board:
         if self.matrix[position] != EMPTY:
-            raise ForbiddenMoveError("The cell is already taken you dum-dum.")
+            raise ForbiddenMoveError("The cell is already taken.")
         new_board_state = self.__copy()
         new_board_state.matrix[position] = color
         new_board_state.move = Move(color, position)
@@ -217,10 +219,9 @@ class Board():
     def dump(self) -> None:
         index_0_9 = range(10)
         index_10_18 = range(10, 19)
-        print("")
-        print('   ' + '  '.join(map(str, index_0_9)) + ' ' + ' '.join(map(str, index_10_18)))
+        print('y\\x ' + '  '.join(map(str, index_0_9)) + ' ' + ' '.join(map(str, index_10_18)))
         for index, row in enumerate(self.matrix):
-            print(index, end=' ' * (1 if index >= 10 else 2))
+            print(index, end=' ' * (1 + 2 - index // 10))
             for element in row:
                 if element == EMPTY:
                     stone = '·'
@@ -228,7 +229,6 @@ class Board():
                     stone = '○' if element == BLACK else '●'
                 print(stone, end='  ')
             print()
-        print(self.score)
 
     def order_children_by_score(self, maximizing: bool) -> list[tuple[Move, Board]]:
         return sorted(self.children.items(), key=lambda item: item[1].score, reverse=maximizing)

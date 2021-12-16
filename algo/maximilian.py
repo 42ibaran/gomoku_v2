@@ -3,7 +3,8 @@ import time
 from .move import Move
 from .board import Board
 from .constants import WHITE, BLACK
-from multiprocessing import Process, Event, Queue
+from threading import Thread, Event
+from queue import Queue
 
 def prune(maximizing, best_score, child_score, best_child,
           child, alpha, beta) -> tuple[bool, int, Move, int, int]:
@@ -63,17 +64,17 @@ def perform_minmax(board: Board, alpha, beta, remaining_depth: int,
 
     return Move(board.move.opposite_color, best_child), best_score
 
-def get_next_move(board: Board, depth=4) -> tuple[Move, float, int]:
+def get_next_move(board: Board, depth: int=4) -> tuple[Move, float]:
     start_time = time.time()
     if not board.move:
-        return Move(BLACK, (9, 9)), time.time() - start_time, 0
+        return Move(BLACK, (9, 9)), time.time() - start_time
     best_child, _ = perform_minmax(
         board,
         float('-inf'),
         float('inf'),
         depth
     )
-    return best_child, time.time() - start_time, depth
+    return best_child, time.time() - start_time
 
 def run_in_background(board: Board, stop_event: Event, queue: Queue, depth=5) -> None:
     try:
@@ -90,24 +91,20 @@ def run_in_background(board: Board, stop_event: Event, queue: Queue, depth=5) ->
         print("\nPress Ctrl+C again to exit.")
         exit(0)
 
-def start_background_search(board: Board) -> tuple[Process, Event, Queue]:
+def start_background_search(board: Board) -> tuple[Thread, Event, Queue]:
     if not board.move:
         return None, None, None
     queue = Queue(1)
     stop_event = Event()
-    background_process = Process(target=run_in_background, args=(board, stop_event, queue))
-    background_process.daemon = False
+    background_process = Thread(target=run_in_background, args=(board, stop_event, queue))
     background_process.start()
     return background_process, stop_event, queue
 
-def end_background_search(background_process, stop_event, queue: Queue) -> Board:
+def end_background_search(background_process: Thread, stop_event: Event, queue: Queue) -> Board:
     if background_process is None:
         return None
     stop_event.set()
-    a = time.time()
     board = queue.get()
-    b = time.time()
-    print(">>> %.5f" % (b - a))
     while background_process.is_alive():
         pass
     background_process.join()

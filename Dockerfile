@@ -2,12 +2,12 @@ FROM python:3.9.7
 
 WORKDIR /tmp/gomoku
 COPY algo ./algo
-COPY setup.py ./
-COPY launch_game.py ./
 COPY requirements.txt ./
+COPY *.py ./
 
 RUN pip3 install -r requirements.txt
 RUN pip3 install .
+RUN npm install ./app
 
 RUN apt-get update
 RUN apt-get install -y zsh

@@ -18,9 +18,9 @@ PatternsValue = {
     Patterns.POTENTIAL_CAPTURE        : 1,
     Patterns.AX_DEVELOPING_TO_2       : 10,
     Patterns.AX_DEVELOPING_TO_3       : 100,
-    Patterns.AX_DEVELOPING_TO_4       : 1000,
-    Patterns.FREE_3                   : 10000,
-    Patterns.CAPTURE                  : 200000,
+    Patterns.CAPTURE                  : 2000,
+    Patterns.AX_DEVELOPING_TO_4       : 10000,
+    Patterns.FREE_3                   : 100000,
     Patterns.FREE_4                   : 1000000,
     Patterns.FIVE_IN_A_ROW            : float('inf'),
 }
