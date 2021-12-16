@@ -1,19 +1,16 @@
 FROM python:3.9.7
 
+EXPOSE 5000
+
 WORKDIR /tmp/gomoku
+
 COPY algo ./algo
 COPY requirements.txt ./
-COPY *.py ./
-
-RUN apt-get update
-RUN apt-get -y install npm node
+COPY launch_game.py ./
+COPY server.py ./
+COPY setup.py ./
 
 RUN pip3 install -r requirements.txt
 RUN pip3 install .
-RUN npm install ./app
 
-RUN apt-get update
-RUN apt-get install -y zsh
-RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
-
-CMD [ "zsh" ]
+CMD [ "python3", "launch_game.py", "-m" ]

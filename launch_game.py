@@ -92,4 +92,4 @@ if __name__ == "__main__":
         app.config['maximilian'] = params.maximilian
         app.config['suggestion'] = params.suggestion
         app.config['white'] = params.white
-        app.run()
+        app.run(host='0.0.0.0')

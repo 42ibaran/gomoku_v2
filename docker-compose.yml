@@ -1,0 +1,9 @@
+services:
+  app:
+    image: gomoku_app:latest
+    ports:
+      - 3000:3000
+  server:
+    image: gomoku_server:latest
+    ports:
+      - 5000:5000
