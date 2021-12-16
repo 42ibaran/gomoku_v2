@@ -67,11 +67,12 @@ def make_move():
         return message(str(e)), 400
 
     maximilian_move = time_maximilian_move = suggestion = time_suggestion = None
-    if app.config['maximilian']:
-        maximilian_move, time_maximilian_move = get_next_move(game.board)
-        game.record_new_move(maximilian_move)
-    if app.config['suggestion']:
-        suggestion, time_suggestion = get_next_move(game.board)
+    if not game.is_over:
+        if app.config['maximilian']:
+            maximilian_move, time_maximilian_move = get_next_move(game.board)
+            game.record_new_move(maximilian_move)
+        if app.config['suggestion']:
+            suggestion, time_suggestion = get_next_move(game.board)
 
     response = {
         'move': {
