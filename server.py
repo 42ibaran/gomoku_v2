@@ -57,6 +57,7 @@ def make_move():
     last_move = Move(data['color'], tuple(data['position']))
 
     board = end_background_search(bg_process, event, queue)
+    bg_process = event = queue = None
     if board is not None:
         game.board = board
 
