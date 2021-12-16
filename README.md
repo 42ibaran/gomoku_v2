@@ -12,8 +12,7 @@ ___
 3. 🔥 Play on web
     1. 🔨 Installation
     2. 🏄🏽‍♀️ Usage
-4. Testing
-5. License
+4. License
 ___
 ## 1. ℹ️ **Description**
 
@@ -116,8 +115,8 @@ ___
 - Run the program `python3 launch_game.py -t`
 
 **Use Docker:**
-- Check that Docker is properly installed and running.
-- Miau
+- Build the image: `docker build -t gomoku .`
+- Run the container (all dependencies are installed): `docker run -it --rm gomoku`
 
 ### 2.2. 🤹🏽 **Usage**
 
@@ -158,9 +157,6 @@ Changing options or restarting the game:
 - If at any point you want to play with a different configuration, you can stop the server and relaunch it with other parameters. Then, refresh the window and you can start playing again. Do not stop the app!!
 
 ___
-## 4. **Testing**
-
-___
-## 5. **License**
+## 4. **License**
 
 © 2021 Copyright [Ivan Baran](https://github.com/42ibaran) & [Cristina Fernández Bornay](https://github.com/CristinaFdezBornay) under the [MIT License](https://github.com/42ibaran/gomoku_v2/blob/master/LICENSE)
